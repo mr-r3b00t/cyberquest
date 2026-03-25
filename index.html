@@ -788,6 +788,225 @@
     transition: width 0.5s ease;
   }
 
+  /* Welcome screen */
+  .welcome-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    text-align: center;
+  }
+
+  .welcome-shield {
+    font-size: 5rem;
+    margin-bottom: 1.5rem;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .welcome-title {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .welcome-desc {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    max-width: 500px;
+    line-height: 1.7;
+    margin-bottom: 2rem;
+  }
+
+  .name-input-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .name-input-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .name-input {
+    width: 100%;
+    padding: 0.9rem 1.25rem;
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 1.1rem;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+
+  .name-input:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px var(--glow-blue);
+  }
+
+  .name-input::placeholder {
+    color: var(--text-muted);
+  }
+
+  .start-btn {
+    padding: 0.9rem 3rem;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .start-btn.enabled {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .start-btn.enabled:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px var(--glow-blue);
+  }
+
+  /* Final completion / certificate screen */
+  .cert-preview {
+    background: linear-gradient(135deg, #fffbe6, #fff9db, #fffbe6);
+    border: 3px solid #d4a853;
+    border-radius: 4px;
+    padding: 3rem 2rem;
+    text-align: center;
+    color: #1a1a2e;
+    max-width: 600px;
+    margin: 1.5rem auto;
+    position: relative;
+    box-shadow: 0 4px 30px rgba(212, 168, 83, 0.2);
+  }
+
+  .cert-preview::before,
+  .cert-preview::after {
+    content: '';
+    position: absolute;
+    border: 2px solid #d4a853;
+    border-radius: 2px;
+  }
+
+  .cert-preview::before {
+    inset: 8px;
+  }
+
+  .cert-preview::after {
+    inset: 12px;
+    border-style: dashed;
+    opacity: 0.4;
+  }
+
+  .cert-org {
+    font-size: 0.75rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #8b7340;
+    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cert-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #2c2c54;
+    margin-bottom: 0.25rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cert-subtitle {
+    font-size: 0.85rem;
+    color: #555;
+    margin-bottom: 1.5rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cert-name {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #1a1a2e;
+    font-style: italic;
+    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cert-detail {
+    font-size: 0.85rem;
+    color: #555;
+    line-height: 1.8;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cert-score-line {
+    font-weight: 700;
+    color: #2c6e49;
+    font-size: 1rem;
+    margin: 0.75rem 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cert-date {
+    font-size: 0.8rem;
+    color: #8b7340;
+    margin-top: 1rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .download-cert-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    padding: 0.9rem 2.5rem;
+    background: linear-gradient(135deg, #d4a853, #b8922e);
+    color: #1a1a2e;
+    border: none;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .download-cert-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(212, 168, 83, 0.4);
+  }
+
   /* Responsive */
   @media (max-width: 640px) {
     .app-container { padding: 1rem; }
@@ -795,6 +1014,8 @@
     .scenario-grid { grid-template-columns: 1fr; }
     .score-bar { flex-direction: column; align-items: flex-start; }
     .scene-body { padding: 1.25rem; }
+    .cert-preview { padding: 2rem 1rem; }
+    .cert-name { font-size: 1.3rem; }
   }
 </style>
 </head>
@@ -810,14 +1031,30 @@
     <div class="tagline">Interactive Security Awareness Training</div>
   </div>
 
-  <div class="score-bar" id="scoreBar">
+  <div class="score-bar" id="scoreBar" style="display:none;">
     <div class="score-item"><span class="icon">&#9733;</span> Score: <span class="value" id="totalScore">0</span></div>
     <div class="score-item"><span class="icon">&#128170;</span> Scenarios: <span class="value" id="scenariosDone">0</span>/4</div>
     <div class="score-item"><span class="icon">&#128293;</span> Streak: <span class="value" id="streak">0</span></div>
   </div>
 
+  <!-- WELCOME SCREEN -->
+  <div class="screen active" id="welcomeScreen">
+    <div class="welcome-container">
+      <div class="welcome-shield">&#128737;</div>
+      <div class="welcome-title">Welcome to CyberQuest</div>
+      <div class="welcome-desc">
+        You're about to face real-world security scenarios. Make the right calls, learn from mistakes, and earn your Security Awareness Certificate.
+      </div>
+      <div class="name-input-group">
+        <label>Enter your full name</label>
+        <input type="text" class="name-input" id="playerName" placeholder="e.g. Alex Johnson" autocomplete="off" maxlength="60">
+        <button class="start-btn" id="startBtn" onclick="beginTraining()">Begin Training &rarr;</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MENU SCREEN -->
-  <div class="screen active" id="menuScreen">
+  <div class="screen" id="menuScreen">
     <div class="narrative" style="text-align:center; margin-bottom: 0.5rem;">
       <strong>Choose a scenario</strong> to begin your training. Each one puts you in a real-world situation where you must make the right call.
     </div>
@@ -844,7 +1081,12 @@
 
   <!-- SUMMARY SCREEN -->
   <div class="screen" id="summaryScreen"></div>
+
+  <!-- COMPLETION / CERTIFICATE SCREEN -->
+  <div class="screen" id="completionScreen"></div>
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
 
 <script>
 // ===== SCENARIO DATA =====
@@ -1128,17 +1370,50 @@ const scenarios = [
 
 // ===== STATE =====
 let state = {
+  playerName: '',
   totalScore: 0,
   streak: 0,
   scenariosDone: 0,
   completed: {},
+  scenarioScores: {},
+  maxPossible: 0,
   currentScenario: null,
   currentStep: 0
 };
 
+// ===== WELCOME / NAME INPUT =====
+const nameInput = document.getElementById('playerName');
+const startBtn = document.getElementById('startBtn');
+
+nameInput.addEventListener('input', () => {
+  const val = nameInput.value.trim();
+  if (val.length >= 2) {
+    startBtn.classList.add('enabled');
+  } else {
+    startBtn.classList.remove('enabled');
+  }
+});
+
+nameInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && nameInput.value.trim().length >= 2) {
+    beginTraining();
+  }
+});
+
+function beginTraining() {
+  state.playerName = nameInput.value.trim();
+  if (state.playerName.length < 2) return;
+  // Calculate max possible score
+  state.maxPossible = scenarios.reduce((sum, s) => sum + s.steps.length * 100, 0);
+  document.getElementById('scoreBar').style.display = '';
+  renderMenu();
+  showScreen('menuScreen');
+}
+
 // ===== RENDER MENU =====
 function renderMenu() {
   const grid = document.getElementById('scenarioGrid');
+  const allDone = state.scenariosDone >= 4;
   grid.innerHTML = scenarios.map(s => {
     const done = state.completed[s.id];
     return `<div class="scenario-card ${done ? 'completed' : ''}" style="--card-accent:${s.color}" onclick="startScenario('${s.id}')">
@@ -1151,12 +1426,25 @@ function renderMenu() {
       </div>
     </div>`;
   }).join('');
+
+  // Show certificate button if all done
+  const existingCertBtn = document.getElementById('menuCertBtn');
+  if (existingCertBtn) existingCertBtn.remove();
+  if (allDone) {
+    const btn = document.createElement('div');
+    btn.id = 'menuCertBtn';
+    btn.style.textAlign = 'center';
+    btn.style.marginTop = '2rem';
+    btn.innerHTML = `<button class="download-cert-btn" onclick="showCompletion()">&#127891; View Your Certificate</button>`;
+    grid.parentNode.appendChild(btn);
+  }
 }
 
 // ===== START SCENARIO =====
 function startScenario(id) {
   state.currentScenario = scenarios.find(s => s.id === id);
   state.currentStep = 0;
+  if (!state.scenarioScores[id]) state.scenarioScores[id] = 0;
   showScreen('scenarioScreen');
   renderStep();
 }
@@ -1260,6 +1548,7 @@ function makeChoice(idx) {
   if (choice.correct) {
     chosenBtn.classList.add('correct');
     state.totalScore += 100;
+    state.scenarioScores[sc.id] = (state.scenarioScores[sc.id] || 0) + 100;
     state.streak++;
     showFeedback(true, choice.feedback);
   } else {
@@ -1308,8 +1597,10 @@ function advanceScene() {
 // ===== SHOW SUMMARY =====
 function showSummary() {
   const sc = state.currentScenario;
-  const totalPossible = sc.steps.length * 100;
-  const icon = state.totalScore >= totalPossible ? '&#127942;' : '&#128170;';
+  const scScore = state.scenarioScores[sc.id] || 0;
+  const scMax = sc.steps.length * 100;
+  const icon = scScore === scMax ? '&#127942;' : '&#128170;';
+  const allDone = state.scenariosDone >= 4;
 
   document.getElementById('summaryScreen').innerHTML = `
     <div class="summary-container">
@@ -1318,16 +1609,16 @@ function showSummary() {
       <div class="summary-subtitle">${sc.title} — ${sc.badge}</div>
       <div class="summary-stats">
         <div class="summary-stat">
-          <div class="stat-value" style="color:var(--accent-green)">${state.totalScore}</div>
-          <div class="stat-label">Total Score</div>
+          <div class="stat-value" style="color:var(--accent-green)">${scScore}/${scMax}</div>
+          <div class="stat-label">Scenario Score</div>
         </div>
         <div class="summary-stat">
           <div class="stat-value" style="color:var(--accent-cyan)">${state.scenariosDone}/4</div>
           <div class="stat-label">Scenarios Done</div>
         </div>
         <div class="summary-stat">
-          <div class="stat-value" style="color:var(--accent-amber)">${state.streak}</div>
-          <div class="stat-label">Current Streak</div>
+          <div class="stat-value" style="color:var(--accent-amber)">${state.totalScore}</div>
+          <div class="stat-label">Total Score</div>
         </div>
       </div>
       <div class="summary-lessons">
@@ -1336,10 +1627,192 @@ function showSummary() {
           ${sc.lessons.map(l => `<li>${l}</li>`).join('')}
         </ul>
       </div>
+      ${allDone
+        ? `<button class="continue-btn show" onclick="showCompletion()" style="display:inline-block;margin-bottom:0.75rem;">View Certificate &rarr;</button><br>`
+        : ''}
       <button class="btn-back-menu" onclick="backToMenu()">&#8592; Back to Scenarios</button>
     </div>`;
 
   showScreen('summaryScreen');
+}
+
+// ===== COMPLETION / CERTIFICATE =====
+function showCompletion() {
+  const pct = Math.round((state.totalScore / state.maxPossible) * 100);
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  const scenarioLines = scenarios.map(s => {
+    const got = state.scenarioScores[s.id] || 0;
+    const max = s.steps.length * 100;
+    return `<div style="display:flex;justify-content:space-between;padding:0.15rem 0;"><span>${s.title}</span><span style="font-weight:700;">${got}/${max}</span></div>`;
+  }).join('');
+
+  document.getElementById('completionScreen').innerHTML = `
+    <div class="summary-container">
+      <div class="summary-icon">&#127891;</div>
+      <div class="summary-title">Training Complete!</div>
+      <div class="summary-subtitle">Congratulations, ${state.playerName}! You've completed all security awareness scenarios.</div>
+
+      <div class="cert-preview">
+        <div class="cert-org">CyberQuest Security Training</div>
+        <div class="cert-title">Certificate of Completion</div>
+        <div class="cert-subtitle">Security Awareness Training Programme</div>
+        <div class="cert-name">${state.playerName}</div>
+        <div class="cert-detail">
+          has successfully completed all four interactive<br>security awareness training scenarios
+        </div>
+        <div class="cert-score-line">Overall Score: ${state.totalScore} / ${state.maxPossible} (${pct}%)</div>
+        <div style="position:relative;z-index:1;font-size:0.8rem;color:#555;">
+          ${scenarioLines}
+        </div>
+        <div class="cert-date">${dateStr}</div>
+      </div>
+
+      <button class="download-cert-btn" onclick="generatePDF()">&#128196; Download PDF Certificate</button>
+      <br><br>
+      <button class="btn-back-menu" onclick="backToMenu()">&#8592; Back to Scenarios</button>
+    </div>`;
+
+  showScreen('completionScreen');
+}
+
+// ===== PDF GENERATION =====
+function generatePDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const w = 297, h = 210;
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  const pct = Math.round((state.totalScore / state.maxPossible) * 100);
+
+  // Background
+  doc.setFillColor(255, 251, 235);
+  doc.rect(0, 0, w, h, 'F');
+
+  // Outer border
+  doc.setDrawColor(180, 140, 60);
+  doc.setLineWidth(2);
+  doc.rect(8, 8, w - 16, h - 16);
+
+  // Inner border
+  doc.setLineWidth(0.5);
+  doc.rect(12, 12, w - 24, h - 24);
+
+  // Dashed inner border
+  doc.setLineDashPattern([3, 2], 0);
+  doc.setDrawColor(200, 170, 90);
+  doc.setLineWidth(0.3);
+  doc.rect(15, 15, w - 30, h - 30);
+  doc.setLineDashPattern([], 0);
+
+  // Corner flourishes
+  const corners = [[20, 20], [w - 20, 20], [20, h - 20], [w - 20, h - 20]];
+  doc.setDrawColor(180, 140, 60);
+  doc.setLineWidth(0.8);
+  corners.forEach(([cx, cy]) => {
+    doc.circle(cx, cy, 3);
+    doc.circle(cx, cy, 1.5);
+  });
+
+  // Shield icon (simple)
+  doc.setFillColor(180, 140, 60);
+  const sx = w / 2, sy = 32;
+  doc.triangle(sx - 8, sy - 4, sx + 8, sy - 4, sx, sy + 10, 'F');
+  doc.rect(sx - 8, sy - 10, 16, 6, 'F');
+  doc.setFillColor(255, 251, 235);
+  doc.circle(sx, sy - 2, 2.5, 'F');
+
+  // Organisation
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(139, 115, 64);
+  doc.text('CYBERQUEST SECURITY TRAINING', w / 2, 50, { align: 'center' });
+
+  // Title
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(28);
+  doc.setTextColor(44, 44, 84);
+  doc.text('Certificate of Completion', w / 2, 64, { align: 'center' });
+
+  // Subtitle
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(12);
+  doc.setTextColor(100, 100, 100);
+  doc.text('Security Awareness Training Programme', w / 2, 73, { align: 'center' });
+
+  // Decorative line
+  doc.setDrawColor(180, 140, 60);
+  doc.setLineWidth(0.5);
+  doc.line(w / 2 - 50, 78, w / 2 + 50, 78);
+
+  // "This certifies that"
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(11);
+  doc.setTextColor(120, 120, 120);
+  doc.text('This certifies that', w / 2, 88, { align: 'center' });
+
+  // Name
+  doc.setFont('helvetica', 'bolditalic');
+  doc.setFontSize(26);
+  doc.setTextColor(30, 30, 60);
+  doc.text(state.playerName, w / 2, 102, { align: 'center' });
+
+  // Name underline
+  const nameWidth = doc.getTextWidth(state.playerName);
+  doc.setDrawColor(180, 140, 60);
+  doc.setLineWidth(0.3);
+  doc.line(w / 2 - nameWidth / 2 - 5, 105, w / 2 + nameWidth / 2 + 5, 105);
+
+  // Description
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.setTextColor(80, 80, 80);
+  doc.text('has successfully completed all four interactive security awareness training scenarios', w / 2, 115, { align: 'center' });
+
+  // Scenarios covered
+  doc.setFontSize(9);
+  doc.setTextColor(100, 100, 100);
+  const scenarioNames = scenarios.map(s => s.badge).join('   |   ');
+  doc.text(scenarioNames, w / 2, 123, { align: 'center' });
+
+  // Score
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(44, 110, 73);
+  doc.text(`Overall Score: ${state.totalScore} / ${state.maxPossible} (${pct}%)`, w / 2, 135, { align: 'center' });
+
+  // Per-scenario breakdown
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(100, 100, 100);
+  let bx = w / 2 - 80;
+  scenarios.forEach((s, i) => {
+    const got = state.scenarioScores[s.id] || 0;
+    const max = s.steps.length * 100;
+    const lineY = 143 + i * 6;
+    doc.text(s.title, bx, lineY);
+    doc.text(`${got} / ${max}`, bx + 160, lineY, { align: 'right' });
+  });
+
+  // Decorative line
+  doc.setDrawColor(180, 140, 60);
+  doc.setLineWidth(0.5);
+  doc.line(w / 2 - 50, 170, w / 2 + 50, 170);
+
+  // Date
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(139, 115, 64);
+  doc.text(`Awarded on ${dateStr}`, w / 2, 178, { align: 'center' });
+
+  // Cert ID
+  doc.setFontSize(7);
+  doc.setTextColor(170, 170, 170);
+  const certId = 'CQ-' + today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0') + '-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+  doc.text(`Certificate ID: ${certId}`, w / 2, 195, { align: 'center' });
+
+  doc.save(`CyberQuest_Certificate_${state.playerName.replace(/\s+/g, '_')}.pdf`);
 }
 
 // ===== NAVIGATION =====
