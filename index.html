@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CyberQuest - Security Awareness Training</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg-dark: #0a0e1a;
+    --bg-card: #131829;
+    --bg-card-hover: #1a2035;
+    --accent-blue: #3b82f6;
+    --accent-cyan: #06b6d4;
+    --accent-green: #10b981;
+    --accent-red: #ef4444;
+    --accent-amber: #f59e0b;
+    --accent-purple: #8b5cf6;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --border: #1e293b;
+    --glow-blue: rgba(59, 130, 246, 0.3);
+    --glow-red: rgba(239, 68, 68, 0.3);
+    --glow-green: rgba(16, 185, 129, 0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background */
+  .bg-grid {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    z-index: 0;
+  }
+
+  .bg-glow {
+    position: fixed;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.15;
+    z-index: 0;
+    transition: all 2s ease;
+  }
+
+  .bg-glow-1 { background: var(--accent-blue); top: -200px; left: -200px; }
+  .bg-glow-2 { background: var(--accent-purple); bottom: -200px; right: -200px; }
+
+  .app-container {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .logo {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue), var(--accent-purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -1px;
+    margin-bottom: 0.25rem;
+  }
+
+  .logo-icon {
+    display: inline-block;
+    margin-right: 0.5rem;
+    font-size: 2.2rem;
+    -webkit-text-fill-color: initial;
+  }
+
+  .tagline {
+    color: var(--text-secondary);
+    font-size: 1rem;
+  }
+
+  /* Score bar */
+  .score-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 2rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .score-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+
+  .score-item .value {
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-primary);
+  }
+
+  .score-item .icon {
+    font-size: 1.2rem;
+  }
+
+  /* Screens */
+  .screen {
+    display: none;
+    animation: fadeSlideIn 0.5s ease;
+  }
+
+  .screen.active {
+    display: block;
+  }
+
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-5px); }
+    80% { transform: translateX(5px); }
+  }
+
+  @keyframes pulse-green {
+    0%, 100% { box-shadow: 0 0 0 0 var(--glow-green); }
+    50% { box-shadow: 0 0 20px 5px var(--glow-green); }
+  }
+
+  @keyframes pulse-red {
+    0%, 100% { box-shadow: 0 0 0 0 var(--glow-red); }
+    50% { box-shadow: 0 0 20px 5px var(--glow-red); }
+  }
+
+  /* Menu cards */
+  .scenario-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+    margin-top: 1rem;
+  }
+
+  .scenario-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.75rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .scenario-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--card-accent), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .scenario-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--card-accent);
+    background: var(--bg-card-hover);
+  }
+
+  .scenario-card:hover::before { opacity: 1; }
+
+  .scenario-card.completed {
+    border-color: var(--accent-green);
+    opacity: 0.7;
+  }
+
+  .scenario-card.completed::after {
+    content: 'COMPLETED';
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--accent-green);
+    background: rgba(16, 185, 129, 0.1);
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+  }
+
+  .card-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .card-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .card-difficulty {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.05);
+  }
+
+  /* Scenario scene */
+  .scene-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .scene-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background: rgba(0,0,0,0.2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .scene-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    text-transform: uppercase;
+  }
+
+  .scene-step {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .scene-body {
+    padding: 2rem;
+  }
+
+  /* Email mockup */
+  .email-mockup {
+    background: #1a1f2e;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .email-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    background: #0d1117;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .email-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .email-toolbar-title {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-left: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .email-header-row {
+    display: flex;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 0.85rem;
+  }
+
+  .email-label {
+    color: var(--text-muted);
+    min-width: 70px;
+    font-weight: 500;
+  }
+
+  .email-value {
+    color: var(--text-primary);
+    word-break: break-all;
+  }
+
+  .email-value.suspicious {
+    color: var(--accent-amber);
+  }
+
+  .email-body-content {
+    padding: 1.25rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+  }
+
+  .email-body-content .highlight {
+    color: var(--accent-amber);
+    font-weight: 600;
+  }
+
+  .email-btn-fake {
+    display: inline-block;
+    background: var(--accent-blue);
+    color: white;
+    padding: 8px 24px;
+    border-radius: 6px;
+    font-weight: 600;
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  /* Phone mockup */
+  .phone-mockup {
+    background: #1a1f2e;
+    border: 2px solid var(--border);
+    border-radius: 24px;
+    max-width: 340px;
+    margin: 0 auto 1.5rem;
+    overflow: hidden;
+  }
+
+  .phone-statusbar {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.4rem 1.25rem;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    background: #0d1117;
+  }
+
+  .phone-caller {
+    text-align: center;
+    padding: 2rem 1.5rem;
+    background: linear-gradient(180deg, #0d1117, #1a1f2e);
+  }
+
+  .phone-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin: 0 auto 0.75rem;
+  }
+
+  .phone-caller-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+  }
+
+  .phone-caller-number {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .phone-transcript {
+    padding: 1.25rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Chat / Teams mockup */
+  .chat-mockup {
+    background: #1a1f2e;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+
+  .chat-header-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: #0d1117;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .chat-messages {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .chat-msg {
+    display: flex;
+    gap: 0.6rem;
+    font-size: 0.85rem;
+  }
+
+  .chat-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .chat-bubble {
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    padding: 0.6rem 0.9rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+
+  .chat-sender {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.8rem;
+    margin-bottom: 0.15rem;
+  }
+
+  /* Device code mockup */
+  .device-code-box {
+    background: #0d1117;
+    border: 2px dashed var(--accent-amber);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .device-code-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .device-code-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 6px;
+    color: var(--accent-amber);
+    margin-bottom: 0.75rem;
+  }
+
+  .device-code-url {
+    font-size: 0.85rem;
+    color: var(--accent-blue);
+  }
+
+  /* Narrative text */
+  .narrative {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+  }
+
+  .narrative strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .narrative .red-flag {
+    color: var(--accent-red);
+    font-weight: 600;
+  }
+
+  /* Choices */
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .choice-btn {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: left;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    width: 100%;
+  }
+
+  .choice-btn:hover {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: var(--accent-blue);
+    transform: translateX(4px);
+  }
+
+  .choice-btn .choice-letter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(59, 130, 246, 0.15);
+    color: var(--accent-blue);
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    flex-shrink: 0;
+  }
+
+  .choice-btn.correct {
+    border-color: var(--accent-green) !important;
+    background: rgba(16, 185, 129, 0.1) !important;
+    animation: pulse-green 1s ease;
+  }
+
+  .choice-btn.correct .choice-letter {
+    background: var(--accent-green);
+    color: white;
+  }
+
+  .choice-btn.wrong {
+    border-color: var(--accent-red) !important;
+    background: rgba(239, 68, 68, 0.1) !important;
+    animation: shake 0.5s ease;
+  }
+
+  .choice-btn.wrong .choice-letter {
+    background: var(--accent-red);
+    color: white;
+  }
+
+  .choice-btn:disabled {
+    cursor: default;
+    opacity: 0.6;
+  }
+
+  .choice-btn:disabled:hover {
+    transform: none;
+  }
+
+  /* Feedback panel */
+  .feedback-panel {
+    margin-top: 1.25rem;
+    padding: 1.25rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    display: none;
+    animation: fadeSlideIn 0.4s ease;
+  }
+
+  .feedback-panel.show { display: block; }
+
+  .feedback-panel.good {
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #86efac;
+  }
+
+  .feedback-panel.bad {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+  }
+
+  .feedback-panel .fb-title {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .feedback-panel.good .fb-title { color: var(--accent-green); }
+  .feedback-panel.bad .fb-title { color: var(--accent-red); }
+
+  /* Continue button */
+  .continue-btn {
+    display: none;
+    margin-top: 1.5rem;
+    padding: 0.8rem 2rem;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .continue-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px var(--glow-blue);
+  }
+
+  .continue-btn.show { display: inline-block; }
+
+  /* Summary */
+  .summary-container {
+    text-align: center;
+    padding: 2rem 0;
+  }
+
+  .summary-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+  }
+
+  .summary-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+  }
+
+  .summary-subtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .summary-stats {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .summary-stat {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 2rem;
+    min-width: 120px;
+  }
+
+  .summary-stat .stat-value {
+    font-size: 2rem;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .summary-stat .stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+  }
+
+  .summary-lessons {
+    text-align: left;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .summary-lessons h3 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: var(--accent-cyan);
+  }
+
+  .summary-lessons ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .summary-lessons li {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    padding-left: 1.5rem;
+    position: relative;
+    line-height: 1.5;
+  }
+
+  .summary-lessons li::before {
+    content: '>';
+    position: absolute;
+    left: 0;
+    color: var(--accent-cyan);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+  }
+
+  .btn-back-menu {
+    padding: 0.8rem 2.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .btn-back-menu:hover {
+    border-color: var(--accent-blue);
+    background: var(--bg-card-hover);
+  }
+
+  /* Progress bar */
+  .progress-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 2px;
+    margin-bottom: 1.5rem;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
+    transition: width 0.5s ease;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .app-container { padding: 1rem; }
+    .logo { font-size: 1.8rem; }
+    .scenario-grid { grid-template-columns: 1fr; }
+    .score-bar { flex-direction: column; align-items: flex-start; }
+    .scene-body { padding: 1.25rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow bg-glow-1"></div>
+<div class="bg-glow bg-glow-2"></div>
+
+<div class="app-container">
+  <div class="header">
+    <div class="logo"><span class="logo-icon">&#128737;</span>CyberQuest</div>
+    <div class="tagline">Interactive Security Awareness Training</div>
+  </div>
+
+  <div class="score-bar" id="scoreBar">
+    <div class="score-item"><span class="icon">&#9733;</span> Score: <span class="value" id="totalScore">0</span></div>
+    <div class="score-item"><span class="icon">&#128170;</span> Scenarios: <span class="value" id="scenariosDone">0</span>/4</div>
+    <div class="score-item"><span class="icon">&#128293;</span> Streak: <span class="value" id="streak">0</span></div>
+  </div>
+
+  <!-- MENU SCREEN -->
+  <div class="screen active" id="menuScreen">
+    <div class="narrative" style="text-align:center; margin-bottom: 0.5rem;">
+      <strong>Choose a scenario</strong> to begin your training. Each one puts you in a real-world situation where you must make the right call.
+    </div>
+    <div class="scenario-grid" id="scenarioGrid"></div>
+  </div>
+
+  <!-- SCENARIO SCREEN -->
+  <div class="screen" id="scenarioScreen">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="scene-container">
+      <div class="scene-header">
+        <span class="scene-badge" id="sceneBadge"></span>
+        <span id="sceneTitle" style="font-weight:600;"></span>
+        <span class="scene-step" id="sceneStep"></span>
+      </div>
+      <div class="scene-body" id="sceneBody"></div>
+    </div>
+    <div class="feedback-panel" id="feedbackPanel">
+      <div class="fb-title" id="fbTitle"></div>
+      <div id="fbText"></div>
+    </div>
+    <button class="continue-btn" id="continueBtn" onclick="advanceScene()">Continue &rarr;</button>
+  </div>
+
+  <!-- SUMMARY SCREEN -->
+  <div class="screen" id="summaryScreen"></div>
+</div>
+
+<script>
+// ===== SCENARIO DATA =====
+const scenarios = [
+  {
+    id: 'phishing',
+    title: 'The Suspicious Email',
+    desc: 'A seemingly urgent email arrives in your Office 365 inbox. Something feels off...',
+    icon: '&#128231;',
+    color: '#ef4444',
+    difficulty: 'Medium',
+    badge: 'PHISHING',
+    badgeColor: '#ef4444',
+    lessons: [
+      'Always verify sender email addresses carefully — attackers use lookalike domains.',
+      'Hover over links before clicking to check the real destination URL.',
+      'Legitimate companies will never ask you to urgently verify credentials via email.',
+      'When in doubt, contact IT Security or the alleged sender through a known, trusted channel.',
+      'Report suspicious emails using your organisation\'s reporting mechanism immediately.'
+    ],
+    steps: [
+      {
+        visual: 'email',
+        emailData: {
+          from: 'IT-Security@micros0ft-365.com',
+          to: 'you@yourcompany.com',
+          subject: '&#9888;&#65039; URGENT: Your account will be deactivated in 24 hours',
+          body: `<p>Dear User,</p>
+<p>We have detected <span class="highlight">unusual sign-in activity</span> on your Microsoft 365 account. For your protection, your account will be <span class="highlight">suspended within 24 hours</span> unless you verify your identity.</p>
+<p>Please click the button below to verify your account immediately:</p>
+<div class="email-btn-fake">&#128274; Verify My Account Now</div>
+<p style="margin-top:1rem; font-size:0.8rem; color:#64748b;">If you did not request this, please verify anyway to ensure account safety.<br>Microsoft 365 Security Team</p>`
+        },
+        narrative: '<strong>9:02 AM — Monday morning.</strong> You\'re catching up on emails when this one lands in your inbox. It\'s marked as high importance. What do you do first?',
+        choices: [
+          { text: 'Click "Verify My Account Now" immediately — I can\'t lose access!', correct: false,
+            feedback: 'Clicking links in suspicious emails is extremely dangerous. This could lead to a credential-harvesting page designed to steal your username and password. The urgency is a classic manipulation tactic.' },
+          { text: 'Check the sender\'s email address carefully before doing anything.', correct: true,
+            feedback: 'Excellent instinct! Looking at the sender address "micros0ft-365.com" reveals a lookalike domain — note the zero replacing the "o" in microsoft. This is a classic phishing indicator.' },
+          { text: 'Forward it to my whole team to warn them about the account issue.', correct: false,
+            feedback: 'Forwarding phishing emails spreads the threat! A colleague might click the link. Never forward suspicious emails — report them through proper channels instead.' },
+          { text: 'Reply to the email asking if it\'s legitimate.', correct: false,
+            feedback: 'Replying confirms your email address is active and monitored — valuable information for attackers. Never reply to suspicious emails; report them to IT Security through a known channel.' }
+        ]
+      },
+      {
+        visual: 'none',
+        narrative: 'You examined the sender address: <strong>IT-Security@micros0ft-365.com</strong>. You notice the "0" instead of "o" in "microsoft." You hover over the "Verify" link and see it points to: <strong class="red-flag">http://login-365verify.sketchy-domain.ru/auth</strong>. What\'s your next step?',
+        choices: [
+          { text: 'Report the email using the "Report Phishing" button and alert IT Security.', correct: true,
+            feedback: 'This is the correct action. Reporting helps your security team block the threat for the entire organisation, protecting everyone. Always use official reporting tools.' },
+          { text: 'Just delete the email and move on with your day.', correct: false,
+            feedback: 'Deleting it protects you, but not your colleagues. Others may have received the same email. Reporting ensures the security team can investigate, block the sender, and warn others.' },
+          { text: 'Open the link in an incognito window to safely investigate.', correct: false,
+            feedback: 'Incognito mode does NOT protect you from malicious websites. The page could still steal credentials you enter, download malware, or exploit browser vulnerabilities. Leave investigation to the security team.' }
+        ]
+      },
+      {
+        visual: 'none',
+        narrative: 'IT Security confirms this was a phishing attack targeting your organisation. Several colleagues also received it. Because you reported it quickly, the security team was able to <strong>block the malicious domain</strong> and <strong>send an organisation-wide alert</strong> before anyone fell victim. One last question — how could you verify a legitimate account concern in the future?',
+        choices: [
+          { text: 'Navigate directly to portal.office.com by typing it in the browser, or contact IT through a known phone number.', correct: true,
+            feedback: 'Always go directly to known, trusted URLs or contact IT through established channels. Never use links in emails to access sensitive accounts.' },
+          { text: 'Search Google for "Microsoft 365 login" and click the first result.', correct: false,
+            feedback: 'Attackers can buy ads that appear above legitimate results. Always type known URLs directly rather than relying on search engines for login pages.' },
+          { text: 'Click the link in the email but use a fake password to test it.', correct: false,
+            feedback: 'Even entering fake data on a phishing page is risky — the page may deploy malware, track your IP, or use the interaction to further the attack.' }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'device-code',
+    title: 'The Device Code Trap',
+    desc: 'An unexpected authentication request asks you to enter a code on the Microsoft login page.',
+    icon: '&#128241;',
+    color: '#f59e0b',
+    difficulty: 'Hard',
+    badge: 'DEVICE CODE PHISHING',
+    badgeColor: '#f59e0b',
+    lessons: [
+      'Device code authentication requests you didn\'t initiate are almost always attacks.',
+      'Entering a device code grants the attacker a token to access your account — even with MFA enabled.',
+      'Attackers often impersonate IT support via Teams, email, or phone to deliver the code.',
+      'Always verify unexpected authentication requests by contacting IT through a known, trusted channel.',
+      'Legitimate IT support will never ask you to enter a code you didn\'t generate yourself.'
+    ],
+    steps: [
+      {
+        visual: 'chat',
+        chatData: {
+          platform: 'Microsoft Teams',
+          channelIcon: '&#128172;',
+          messages: [
+            { sender: 'Alex Turner — IT Helpdesk', avatar: 'AT', avatarColor: '#8b5cf6',
+              text: 'Hi there! We\'re rolling out a critical security update to all Office 365 accounts this afternoon. I need to verify your identity to apply it.' },
+            { sender: 'Alex Turner — IT Helpdesk', avatar: 'AT', avatarColor: '#8b5cf6',
+              text: 'Please go to <strong>microsoft.com/devicelogin</strong> and enter this code. It\'ll only take 30 seconds:' }
+          ]
+        },
+        narrative: '<strong>2:15 PM — You receive a Teams message</strong> from someone claiming to be from IT Helpdesk. They say there\'s a critical security update. You also notice this person isn\'t someone you\'ve worked with before. What do you do?',
+        deviceCode: 'GXR4-FK9M',
+        choices: [
+          { text: 'Go to microsoft.com/devicelogin and enter the code to get the security update.', correct: false,
+            feedback: 'Entering this code would authenticate the attacker\'s session with YOUR credentials! Device code phishing bypasses MFA because you are completing the authentication on their behalf.' },
+          { text: 'Ask "Alex" for more details about the update before entering anything.', correct: false,
+            feedback: 'Engaging with the attacker gives them more opportunities to social engineer you. They\'ll likely have convincing answers prepared. Instead, verify through a trusted, independent channel.' },
+          { text: 'Don\'t enter anything. Verify by calling the IT Helpdesk using the number on your company intranet.', correct: true,
+            feedback: 'This is the safest approach. Verifying through a trusted, independent channel protects you from social engineering. Real IT will never ask you to enter device codes you didn\'t generate.' },
+          { text: 'Enter the code but use a different browser profile to be safe.', correct: false,
+            feedback: 'A different browser profile provides no protection here. The moment you enter the code and authenticate, the attacker receives a valid token for your account, regardless of which browser you use.' }
+        ]
+      },
+      {
+        visual: 'none',
+        narrative: 'You called the IT Helpdesk using the verified number from your intranet. They confirm: <strong class="red-flag">they did not send that message and there is no security update rollout today.</strong> The "Alex Turner" account appears to be a compromised or impersonated account. The helpdesk asks what you\'d like to do next. What\'s your call?',
+        choices: [
+          { text: 'Report the incident and let IT investigate the compromised account.', correct: true,
+            feedback: 'Reporting allows the security team to disable the compromised account, investigate the scope of the attack, and alert other potential targets. Time is critical in these situations.' },
+          { text: 'Block "Alex Turner" on Teams and forget about it.', correct: false,
+            feedback: 'Blocking protects you, but the attacker is likely targeting others right now. Without a report, IT can\'t stop the broader attack or secure the compromised account.' },
+          { text: 'Message "Alex" back to tell them you know it\'s a scam.', correct: false,
+            feedback: 'Tipping off the attacker lets them cover their tracks, change tactics, or accelerate attacks on other targets. Report silently and let the security team handle it.' }
+        ]
+      },
+      {
+        visual: 'none',
+        narrative: 'IT Security investigates and finds that <strong>"Alex Turner\'s"</strong> account was compromised through an earlier phishing attack. The attacker had been sending device code requests to dozens of employees. Because you reported it, IT was able to revoke all active sessions and prevent data exfiltration. <br><br><strong>Final question:</strong> What makes device code phishing especially dangerous?',
+        choices: [
+          { text: 'It bypasses multi-factor authentication because the victim completes the MFA challenge themselves.', correct: true,
+            feedback: 'Exactly right. In device code phishing, YOU complete the full authentication — including MFA — and the attacker receives the resulting token. This is why it\'s so dangerous and why you must never enter codes you didn\'t generate.' },
+          { text: 'It installs malware on your device.', correct: false,
+            feedback: 'Device code phishing doesn\'t typically involve malware. Its power lies in getting you to authenticate on the attacker\'s behalf, granting them a valid access token without touching your device.' },
+          { text: 'It only works on mobile devices.', correct: false,
+            feedback: 'Device code phishing works on any device and any browser. The microsoft.com/devicelogin page is a legitimate Microsoft feature — the attack exploits the trust users place in it.' }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'vishing',
+    title: 'The Urgent Payment Call',
+    desc: 'An unexpected phone call demands immediate action on a supposedly failed payment.',
+    icon: '&#128222;',
+    color: '#8b5cf6',
+    difficulty: 'Medium',
+    badge: 'SOCIAL ENGINEERING',
+    badgeColor: '#8b5cf6',
+    lessons: [
+      'Legitimate banks and vendors will never pressure you for immediate card details over the phone.',
+      'Caller ID can be spoofed — a familiar number doesn\'t guarantee a legitimate caller.',
+      'Always hang up and call back using a number from the official website or your records.',
+      'Pressure tactics like urgent deadlines, threats of service loss, or angry tone are classic social engineering red flags.',
+      'Never read out full card numbers, CVVs, or PINs to anyone who calls you.'
+    ],
+    steps: [
+      {
+        visual: 'phone',
+        phoneData: {
+          caller: 'Sarah Jenkins',
+          number: '+44 20 7946 0958',
+          subtitle: 'Vendor Accounts — CloudSync Solutions',
+          transcript: '"Hi, this is Sarah Jenkins from CloudSync Solutions accounts department. I\'m calling because your company\'s latest subscription payment of <strong>£4,200</strong> has <strong>failed</strong> and your services will be <strong>suspended at 5 PM today</strong> unless we process an alternative payment immediately. I\'ll need your corporate credit card details to process this right now."'
+        },
+        narrative: '<strong>3:30 PM — Your desk phone rings.</strong> The caller claims to be from a vendor your company actually uses. She sounds professional and urgent. How do you respond?',
+        choices: [
+          { text: 'Provide the card details — we can\'t afford to lose this service!', correct: false,
+            feedback: 'Never provide payment details to an inbound caller. Scammers research which vendors companies use and create urgency to bypass your critical thinking. This is a classic vishing (voice phishing) attack.' },
+          { text: '"I\'ll need to verify this. Let me call your accounts department using the number we have on file."', correct: true,
+            feedback: 'This is the correct response. Hanging up and calling back on a verified number breaks the scammer\'s control of the conversation. Legitimate vendors will understand and appreciate your caution.' },
+          { text: 'Ask Sarah to verify some account details to prove she\'s legitimate.', correct: false,
+            feedback: 'Scammers often have enough information about your account to sound convincing — they may know your contract number, account manager\'s name, or payment history from prior reconnaissance. Their "verification" proves nothing.' },
+          { text: 'Put her on hold while you quickly check if the payment actually failed.', correct: false,
+            feedback: 'While checking the payment status is reasonable, keeping the scammer on the line maintains their opportunity to pressure you. The safest approach is to end the call completely and call back on a verified number.' }
+        ]
+      },
+      {
+        visual: 'none',
+        narrative: 'You told "Sarah" you\'d call back. She became noticeably agitated: <em>"This really can\'t wait — if your services go down, it\'ll affect your entire team. I just need the card number and I can process it in 2 minutes."</em> You notice the <strong class="red-flag">increased pressure and urgency</strong>. What do you do?',
+        choices: [
+          { text: 'Stand firm — hang up and call CloudSync using the number from their official website.', correct: true,
+            feedback: 'The escalating pressure is a major red flag. Legitimate businesses never pressure you this way. By hanging up and verifying independently, you maintain control and safety.' },
+          { text: 'Give in because the pressure is mounting and it sounds like a real emergency.', correct: false,
+            feedback: 'The pressure IS the attack. Scammers are trained to escalate urgency precisely when you resist. The more desperate they sound, the more likely it\'s a scam. Never let pressure override your judgement.' },
+          { text: 'Offer to pay via bank transfer instead of card to be safer.', correct: false,
+            feedback: 'Changing the payment method doesn\'t make it safer — you\'d still be sending money to a scammer. The payment method isn\'t the problem; the unverified caller is.' }
+        ]
+      },
+      {
+        visual: 'none',
+        narrative: 'You called CloudSync on their verified number. Their <em>actual</em> accounts team confirmed: <strong>your payment went through successfully last week and no one named Sarah Jenkins works there.</strong> You immediately reported the attempted scam to your Finance team and IT Security. <br><br><strong>Final question:</strong> What should your company do to prevent future vishing attacks?',
+        choices: [
+          { text: 'Establish a policy that no payment information is ever given to inbound callers, and implement a callback verification procedure.', correct: true,
+            feedback: 'A clear policy removes the ambiguity that scammers exploit. When "we never process payments on inbound calls" is the rule, employees can confidently refuse without worrying about consequences.' },
+          { text: 'Block the phone number that called.', correct: false,
+            feedback: 'Scammers use spoofed numbers and call from different numbers each time. Blocking one number provides minimal protection. Systemic policies and training are far more effective.' },
+          { text: 'Only process payments via email instead of phone.', correct: false,
+            feedback: 'Email-based payment scams (Business Email Compromise) are equally common and dangerous. The solution is verification procedures, not changing the channel.' }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'insider',
+    title: 'The Shortcut Request',
+    desc: 'A colleague asks you to bend the rules on system access. They seem to have a good reason...',
+    icon: '&#128274;',
+    color: '#06b6d4',
+    difficulty: 'Hard',
+    badge: 'INSIDER THREAT',
+    badgeColor: '#06b6d4',
+    lessons: [
+      'Access control processes exist to protect the organisation — there are no "harmless" shortcuts.',
+      'Even trusted colleagues should follow proper approval procedures for access requests.',
+      'Granting unauthorised access can violate compliance requirements and create audit failures.',
+      'Social engineering doesn\'t only come from outsiders — pressure from colleagues can be equally manipulative.',
+      'When in doubt, escalate to your manager or the system owner rather than granting access yourself.'
+    ],
+    steps: [
+      {
+        visual: 'chat',
+        chatData: {
+          platform: 'Microsoft Teams',
+          channelIcon: '&#128172;',
+          messages: [
+            { sender: 'Jordan Rivera — Marketing Manager', avatar: 'JR', avatarColor: '#06b6d4',
+              text: 'Hey! Quick favour — I need access to the customer analytics dashboard ASAP. My access request is stuck in the approval queue and I\'ve got a board presentation at 4 PM.' },
+            { sender: 'Jordan Rivera — Marketing Manager', avatar: 'JR', avatarColor: '#06b6d4',
+              text: 'Can you just share your login or add me as a viewer? It\'s read-only anyway, no harm done. I\'ll submit the proper request afterwards, promise! 🙏' }
+          ]
+        },
+        narrative: '<strong>1:45 PM — A Teams message from Jordan.</strong> You know Jordan from Marketing — they\'re well-liked and this sounds like a genuine crunch. But they\'re asking you to bypass the access approval process. What do you do?',
+        choices: [
+          { text: 'Share your credentials just this once — Jordan is trustworthy and it\'s read-only.', correct: false,
+            feedback: 'Never share credentials, even with trusted colleagues. Shared credentials make it impossible to audit who accessed what, violate most compliance frameworks, and if anything goes wrong, you are accountable.' },
+          { text: 'Add Jordan as a viewer since it\'s just read-only access — what\'s the harm?', correct: false,
+            feedback: '"Read-only" doesn\'t mean risk-free. Granting unauthorised access bypasses approval workflows that exist for regulatory, legal, and security reasons. Even viewing sensitive customer data requires proper authorisation.' },
+          { text: 'Explain that you can\'t bypass the process, and offer to help expedite their legitimate request.', correct: true,
+            feedback: 'This is the right balance of being helpful and being secure. You can help Jordan contact the approver directly, escalate the urgency, or suggest they ask their manager to fast-track it.' },
+          { text: 'Ignore the message — not your problem.', correct: false,
+            feedback: 'Ignoring the request isn\'t ideal. While you shouldn\'t grant access, being helpful and redirecting Jordan to the right process builds a security-positive culture. Ignoring people can push them to find other, less secure workarounds.' }
+        ]
+      },
+      {
+        visual: 'chat',
+        chatData: {
+          platform: 'Microsoft Teams',
+          channelIcon: '&#128172;',
+          messages: [
+            { sender: 'Jordan Rivera — Marketing Manager', avatar: 'JR', avatarColor: '#06b6d4',
+              text: 'Come on, the approval process takes DAYS and this is for the BOARD. My manager already verbally approved it, it\'s just the ticket that\'s pending. You\'d really make me look bad in front of the directors?' },
+            { sender: 'Jordan Rivera — Marketing Manager', avatar: 'JR', avatarColor: '#06b6d4',
+              text: 'Look, I won\'t tell anyone. Just 20 minutes of access, then you can revoke it. Please? 😩' }
+          ]
+        },
+        narrative: 'Jordan is doubling down with <strong class="red-flag">emotional pressure and claims of verbal approval</strong>. This is getting uncomfortable. What\'s your move?',
+        choices: [
+          { text: 'Give in — the emotional pressure is too much and they probably do have approval.', correct: false,
+            feedback: '"Verbal approval" is unverifiable and meaningless from a compliance perspective. The escalating pressure, emotional appeals, and secrecy ("I won\'t tell anyone") are textbook social engineering tactics — even from insiders.' },
+          { text: 'Politely hold firm and suggest Jordan\'s manager contact the system owner to expedite approval.', correct: true,
+            feedback: 'If the manager truly approved it, they can escalate it formally in minutes. This keeps the process intact while giving Jordan a legitimate fast path. You\'re being helpful without being compliant with a bypass.' },
+          { text: 'Ask your own manager if it\'s OK to make an exception.', correct: false,
+            feedback: 'While escalating shows good instinct, asking your manager to approve a bypass still circumvents the established process. The correct path is to help Jordan work within the system, not to find someone else willing to break it.' }
+        ]
+      },
+      {
+        visual: 'none',
+        narrative: 'Jordan\'s manager fast-tracked the approval through the proper channel, and Jordan got access within 30 minutes — in time for the board presentation. Afterwards, Jordan thanked you for steering them the right way. <br><br>Later, IT Security mentioned they\'d seen a recent increase in <strong>unauthorised access attempts</strong> across the company. Your diligence helped keep your organisation compliant and secure.<br><br><strong>Final question:</strong> Why are insider bypass requests particularly dangerous even when well-intentioned?',
+        choices: [
+          { text: 'They erode access control culture — every exception makes the next bypass easier to justify.', correct: true,
+            feedback: 'Exactly. One "harmless" shortcut normalises bypassing controls. Over time, this creates an environment where proper procedures are seen as obstacles rather than protections — which is exactly what malicious insiders exploit.' },
+          { text: 'Because the person asking is always a malicious insider.', correct: false,
+            feedback: 'Most bypass requests come from well-meaning people under time pressure — like Jordan. The danger isn\'t malicious intent; it\'s the precedent it sets and the compliance/audit gaps it creates.' },
+          { text: 'It\'s only dangerous if the person gets write access.', correct: false,
+            feedback: 'Even read-only access to sensitive data (customer records, financial data, strategic plans) can cause serious harm if it reaches the wrong eyes. Access level doesn\'t determine risk — authorisation does.' }
+        ]
+      }
+    ]
+  }
+];
+
+// ===== STATE =====
+let state = {
+  totalScore: 0,
+  streak: 0,
+  scenariosDone: 0,
+  completed: {},
+  currentScenario: null,
+  currentStep: 0
+};
+
+// ===== RENDER MENU =====
+function renderMenu() {
+  const grid = document.getElementById('scenarioGrid');
+  grid.innerHTML = scenarios.map(s => {
+    const done = state.completed[s.id];
+    return `<div class="scenario-card ${done ? 'completed' : ''}" style="--card-accent:${s.color}" onclick="startScenario('${s.id}')">
+      <div class="card-icon">${s.icon}</div>
+      <div class="card-title">${s.title}</div>
+      <div class="card-desc">${s.desc}</div>
+      <div class="card-difficulty" style="color:${s.color}">
+        <span>${s.difficulty === 'Hard' ? '&#9733;&#9733;&#9733;' : '&#9733;&#9733;'}</span>
+        ${s.difficulty}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ===== START SCENARIO =====
+function startScenario(id) {
+  state.currentScenario = scenarios.find(s => s.id === id);
+  state.currentStep = 0;
+  showScreen('scenarioScreen');
+  renderStep();
+}
+
+// ===== RENDER STEP =====
+function renderStep() {
+  const sc = state.currentScenario;
+  const step = sc.steps[state.currentStep];
+  const total = sc.steps.length;
+
+  document.getElementById('sceneBadge').textContent = sc.badge;
+  document.getElementById('sceneBadge').style.background = sc.badgeColor + '22';
+  document.getElementById('sceneBadge').style.color = sc.badgeColor;
+  document.getElementById('sceneTitle').textContent = sc.title;
+  document.getElementById('sceneStep').textContent = `${state.currentStep + 1} / ${total}`;
+  document.getElementById('progressFill').style.width = ((state.currentStep + 1) / total * 100) + '%';
+
+  let html = '';
+
+  // Visual
+  if (step.visual === 'email') {
+    const e = step.emailData;
+    html += `<div class="email-mockup">
+      <div class="email-toolbar">
+        <div class="email-dot" style="background:#ef4444"></div>
+        <div class="email-dot" style="background:#f59e0b"></div>
+        <div class="email-dot" style="background:#10b981"></div>
+        <span class="email-toolbar-title">Outlook — Inbox</span>
+      </div>
+      <div class="email-header-row"><span class="email-label">From:</span><span class="email-value suspicious">${e.from}</span></div>
+      <div class="email-header-row"><span class="email-label">To:</span><span class="email-value">${e.to}</span></div>
+      <div class="email-header-row"><span class="email-label">Subject:</span><span class="email-value">${e.subject}</span></div>
+      <div class="email-body-content">${e.body}</div>
+    </div>`;
+  } else if (step.visual === 'phone') {
+    const p = step.phoneData;
+    html += `<div class="phone-mockup">
+      <div class="phone-statusbar"><span>3:30 PM</span><span>&#128267; 4G</span></div>
+      <div class="phone-caller">
+        <div class="phone-avatar">&#128100;</div>
+        <div class="phone-caller-name">${p.caller}</div>
+        <div class="phone-caller-number">${p.number}</div>
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">${p.subtitle}</div>
+      </div>
+      <div class="phone-transcript">${p.transcript}</div>
+    </div>`;
+  } else if (step.visual === 'chat') {
+    const c = step.chatData;
+    html += `<div class="chat-mockup">
+      <div class="chat-header-bar">${c.channelIcon} ${c.platform}</div>
+      <div class="chat-messages">
+        ${c.messages.map(m => `<div class="chat-msg">
+          <div class="chat-avatar" style="background:${m.avatarColor}">${m.avatar}</div>
+          <div><div class="chat-sender">${m.sender}</div><div class="chat-bubble">${m.text}</div></div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  // Device code box
+  if (step.deviceCode) {
+    html += `<div class="device-code-box">
+      <div class="device-code-label">Enter this code to authenticate</div>
+      <div class="device-code-value">${step.deviceCode}</div>
+      <div class="device-code-url">microsoft.com/devicelogin</div>
+    </div>`;
+  }
+
+  // Narrative
+  html += `<div class="narrative">${step.narrative}</div>`;
+
+  // Choices
+  const letters = ['A', 'B', 'C', 'D'];
+  html += `<div class="choices" id="choicesContainer">
+    ${step.choices.map((c, i) => `<button class="choice-btn" onclick="makeChoice(${i})" data-idx="${i}">
+      <span class="choice-letter">${letters[i]}</span>
+      <span>${c.text}</span>
+    </button>`).join('')}
+  </div>`;
+
+  document.getElementById('sceneBody').innerHTML = html;
+  document.getElementById('feedbackPanel').className = 'feedback-panel';
+  document.getElementById('feedbackPanel').classList.remove('show');
+  document.getElementById('continueBtn').classList.remove('show');
+}
+
+// ===== MAKE CHOICE =====
+function makeChoice(idx) {
+  const sc = state.currentScenario;
+  const step = sc.steps[state.currentStep];
+  const choice = step.choices[idx];
+
+  // Disable all buttons
+  document.querySelectorAll('.choice-btn').forEach(btn => {
+    btn.disabled = true;
+    btn.style.pointerEvents = 'none';
+  });
+
+  const chosenBtn = document.querySelector(`.choice-btn[data-idx="${idx}"]`);
+
+  if (choice.correct) {
+    chosenBtn.classList.add('correct');
+    state.totalScore += 100;
+    state.streak++;
+    showFeedback(true, choice.feedback);
+  } else {
+    chosenBtn.classList.add('wrong');
+    state.streak = 0;
+    // Highlight correct answer
+    step.choices.forEach((c, i) => {
+      if (c.correct) {
+        document.querySelector(`.choice-btn[data-idx="${i}"]`).classList.add('correct');
+      }
+    });
+    showFeedback(false, choice.feedback);
+  }
+
+  updateScoreBar();
+  document.getElementById('continueBtn').classList.add('show');
+}
+
+// ===== SHOW FEEDBACK =====
+function showFeedback(good, text) {
+  const panel = document.getElementById('feedbackPanel');
+  panel.className = `feedback-panel show ${good ? 'good' : 'bad'}`;
+  document.getElementById('fbTitle').textContent = good ? '&#10004; Correct!' : '&#10008; Not the best choice';
+  document.getElementById('fbTitle').innerHTML = good ? '&#10004; Correct!' : '&#10008; Not the best choice';
+  document.getElementById('fbText').textContent = text;
+}
+
+// ===== ADVANCE =====
+function advanceScene() {
+  const sc = state.currentScenario;
+  state.currentStep++;
+
+  if (state.currentStep >= sc.steps.length) {
+    // Scenario complete
+    state.completed[sc.id] = true;
+    state.scenariosDone = Object.keys(state.completed).length;
+    updateScoreBar();
+    showSummary();
+  } else {
+    renderStep();
+    // Scroll to top of scene
+    document.getElementById('scenarioScreen').scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+// ===== SHOW SUMMARY =====
+function showSummary() {
+  const sc = state.currentScenario;
+  const totalPossible = sc.steps.length * 100;
+  const icon = state.totalScore >= totalPossible ? '&#127942;' : '&#128170;';
+
+  document.getElementById('summaryScreen').innerHTML = `
+    <div class="summary-container">
+      <div class="summary-icon">${icon}</div>
+      <div class="summary-title">Scenario Complete!</div>
+      <div class="summary-subtitle">${sc.title} — ${sc.badge}</div>
+      <div class="summary-stats">
+        <div class="summary-stat">
+          <div class="stat-value" style="color:var(--accent-green)">${state.totalScore}</div>
+          <div class="stat-label">Total Score</div>
+        </div>
+        <div class="summary-stat">
+          <div class="stat-value" style="color:var(--accent-cyan)">${state.scenariosDone}/4</div>
+          <div class="stat-label">Scenarios Done</div>
+        </div>
+        <div class="summary-stat">
+          <div class="stat-value" style="color:var(--accent-amber)">${state.streak}</div>
+          <div class="stat-label">Current Streak</div>
+        </div>
+      </div>
+      <div class="summary-lessons">
+        <h3>&#128218; Key Takeaways</h3>
+        <ul>
+          ${sc.lessons.map(l => `<li>${l}</li>`).join('')}
+        </ul>
+      </div>
+      <button class="btn-back-menu" onclick="backToMenu()">&#8592; Back to Scenarios</button>
+    </div>`;
+
+  showScreen('summaryScreen');
+}
+
+// ===== NAVIGATION =====
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function backToMenu() {
+  renderMenu();
+  showScreen('menuScreen');
+}
+
+function updateScoreBar() {
+  document.getElementById('totalScore').textContent = state.totalScore;
+  document.getElementById('scenariosDone').textContent = state.scenariosDone;
+  document.getElementById('streak').textContent = state.streak;
+}
+
+// ===== INIT =====
+renderMenu();
+</script>
+
+</body>
+</html>
