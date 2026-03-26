@@ -1658,9 +1658,52 @@ function showCompletion() {
 }
 
 // ===== PDF GENERATION =====
-function generatePDF() {
-  var jsPDFLib = window.jspdf;
-  var doc = new jsPDFLib.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+function getJsPDFCtor() {
+  if (window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
+  if (window.jsPDF) return window.jsPDF;
+  return null;
+}
+
+function loadScript(src, onDone) {
+  var s = document.createElement('script');
+  s.src = src;
+  s.async = true;
+  s.onload = function() { onDone(true); };
+  s.onerror = function() { onDone(false); };
+  document.head.appendChild(s);
+}
+
+function ensureJsPDFLoaded(onReady) {
+  var ctor = getJsPDFCtor();
+  if (ctor) {
+    onReady(ctor);
+    return;
+  }
+
+  var cdnList = [
+    'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js',
+    'https://unpkg.com/jspdf@2.5.2/dist/jspdf.umd.min.js'
+  ];
+
+  var i = 0;
+  function tryNext() {
+    if (i >= cdnList.length) {
+      onReady(null);
+      return;
+    }
+    var src = cdnList[i++];
+    loadScript(src, function(ok) {
+      var loadedCtor = getJsPDFCtor();
+      if (ok && loadedCtor) onReady(loadedCtor);
+      else tryNext();
+    });
+  }
+
+  tryNext();
+}
+
+function buildCertificatePDF(jsPDFCtor) {
+  var doc = new jsPDFCtor({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   var w = 297, h = 210;
   var today = new Date();
   var dateStr = today.toLocaleDateString(t('dateLocale'), { day: 'numeric', month: 'long', year: 'numeric' });
@@ -1768,6 +1811,16 @@ function generatePDF() {
   doc.text('Certificate ID: ' + certId, w/2, 195, { align: 'center' });
 
   doc.save('CyberQuest_Certificate_' + state.playerName.replace(/\s+/g,'_') + '.pdf');
+}
+
+function generatePDF() {
+  ensureJsPDFLoaded(function(jsPDFCtor) {
+    if (!jsPDFCtor) {
+      alert('Unable to load PDF generator. Please check your internet connection and try again.');
+      return;
+    }
+    buildCertificatePDF(jsPDFCtor);
+  });
 }
 
 // ===== NAVIGATION =====
