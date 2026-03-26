@@ -1007,6 +1007,13 @@
     box-shadow: 0 4px 20px rgba(212, 168, 83, 0.4);
   }
 
+  /* Language picker */
+  .lang-picker { display:flex; gap:0.5rem; justify-content:center; flex-wrap:wrap; margin-bottom:1.75rem; }
+  .lang-btn { display:flex; align-items:center; gap:0.35rem; padding:0.45rem 0.9rem; background:var(--bg-card); border:1px solid var(--border); border-radius:8px; color:var(--text-secondary); font-family:inherit; font-size:0.82rem; font-weight:600; cursor:pointer; transition:all 0.2s ease; }
+  .lang-btn:hover { border-color:var(--accent-blue); color:var(--text-primary); background:var(--bg-card-hover); }
+  .lang-btn.active { border-color:var(--accent-cyan); color:var(--accent-cyan); background:rgba(6,182,212,0.08); }
+  .lang-flag { font-size:1.1rem; }
+
   /* Responsive */
   @media (max-width: 640px) {
     .app-container { padding: 1rem; }
@@ -1028,27 +1035,34 @@
 <div class="app-container">
   <div class="header">
     <div class="logo"><span class="logo-icon">&#128737;</span>CyberQuest</div>
-    <div class="tagline">Interactive Security Awareness Training</div>
+    <div class="tagline" id="tagline">Interactive Security Awareness Training</div>
   </div>
 
   <div class="score-bar" id="scoreBar" style="display:none;">
-    <div class="score-item"><span class="icon">&#9733;</span> Score: <span class="value" id="totalScore">0</span></div>
-    <div class="score-item"><span class="icon">&#128170;</span> Scenarios: <span class="value" id="scenariosDone">0</span>/4</div>
-    <div class="score-item"><span class="icon">&#128293;</span> Streak: <span class="value" id="streak">0</span></div>
+    <div class="score-item"><span class="icon">&#9733;</span> <span id="lblScore">Score</span>: <span class="value" id="totalScore">0</span></div>
+    <div class="score-item"><span class="icon">&#128170;</span> <span id="lblScenarios">Scenarios</span>: <span class="value" id="scenariosDone">0</span>/4</div>
+    <div class="score-item"><span class="icon">&#128293;</span> <span id="lblStreak">Streak</span>: <span class="value" id="streak">0</span></div>
   </div>
 
   <!-- WELCOME SCREEN -->
   <div class="screen active" id="welcomeScreen">
     <div class="welcome-container">
       <div class="welcome-shield">&#128737;</div>
-      <div class="welcome-title">Welcome to CyberQuest</div>
-      <div class="welcome-desc">
+      <div class="lang-picker" id="langPicker">
+        <button class="lang-btn active" onclick="setLang('en')"><span class="lang-flag">&#127468;&#127463;</span> EN</button>
+        <button class="lang-btn" onclick="setLang('fr')"><span class="lang-flag">&#127467;&#127479;</span> FR</button>
+        <button class="lang-btn" onclick="setLang('de')"><span class="lang-flag">&#127465;&#127466;</span> DE</button>
+        <button class="lang-btn" onclick="setLang('es')"><span class="lang-flag">&#127466;&#127480;</span> ES</button>
+        <button class="lang-btn" onclick="setLang('it')"><span class="lang-flag">&#127470;&#127481;</span> IT</button>
+      </div>
+      <div class="welcome-title" id="welcomeTitle">Welcome to CyberQuest</div>
+      <div class="welcome-desc" id="welcomeDesc">
         You're about to face real-world security scenarios. Make the right calls, learn from mistakes, and earn your Security Awareness Certificate.
       </div>
       <div class="name-input-group">
-        <label>Enter your full name</label>
+        <label id="nameLabel">Enter your full name</label>
         <input type="text" class="name-input" id="playerName" placeholder="e.g. Alex Johnson" autocomplete="off" maxlength="60">
-        <button class="start-btn" id="startBtn" onclick="beginTraining()">Begin Training &rarr;</button>
+        <button class="start-btn" id="startBtn" onclick="beginTraining()">Begin Training &#8594;</button>
       </div>
     </div>
   </div>
@@ -1087,10 +1101,52 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+<script src="translations.js"></script>
 
 <script>
-// ===== SCENARIO DATA =====
-const scenarios = [
+// ===== HELPER: merge translation overlay onto base scenario =====
+function getScenarios() {
+  var lang = state.lang;
+  if (lang === 'en') return SCENARIOS_EN;
+  var trans = SCENARIO_TRANSLATIONS[lang];
+  if (!trans) return SCENARIOS_EN;
+  return SCENARIOS_EN.map(function(sc) {
+    var ov = trans[sc.id];
+    if (!ov) return sc;
+    return Object.assign({}, sc, {
+      title: ov.title || sc.title,
+      desc: ov.desc || sc.desc,
+      difficulty: ov.difficulty || sc.difficulty,
+      badge: ov.badge || sc.badge,
+      lessons: ov.lessons || sc.lessons,
+      steps: sc.steps.map(function(step, i) {
+        var ts = ov.steps && ov.steps[i];
+        if (!ts) return step;
+        var merged = Object.assign({}, step, { narrative: ts.narrative || step.narrative });
+        if (ts.emailData) merged.emailData = Object.assign({}, step.emailData, ts.emailData);
+        if (ts.phoneData) merged.phoneData = Object.assign({}, step.phoneData, ts.phoneData);
+        if (ts.chatData && ts.chatData.messages) {
+          merged.chatData = Object.assign({}, step.chatData, {
+            messages: step.chatData.messages.map(function(m, mi) {
+              var tm = ts.chatData.messages[mi];
+              return tm ? Object.assign({}, m, { text: tm.text }) : m;
+            })
+          });
+        }
+        if (ts.choices) {
+          merged.choices = step.choices.map(function(c, ci) {
+            var tc = ts.choices[ci];
+            return tc ? Object.assign({}, c, { text: tc.text || c.text, feedback: tc.feedback || c.feedback }) : c;
+          });
+        }
+        return merged;
+      })
+    });
+  });
+}
+
+// ===== ENGLISH SCENARIO DATA =====
+var SCENARIOS_EN = [
   {
     id: 'phishing',
     title: 'The Suspicious Email',
@@ -1105,7 +1161,7 @@ const scenarios = [
       'Hover over links before clicking to check the real destination URL.',
       'Legitimate companies will never ask you to urgently verify credentials via email.',
       'When in doubt, contact IT Security or the alleged sender through a known, trusted channel.',
-      'Report suspicious emails using your organisation\'s reporting mechanism immediately.'
+      "Report suspicious emails using your organisation's reporting mechanism immediately."
     ],
     steps: [
       {
@@ -1114,46 +1170,32 @@ const scenarios = [
           from: 'IT-Security@micros0ft-365.com',
           to: 'you@yourcompany.com',
           subject: '&#9888;&#65039; URGENT: Your account will be deactivated in 24 hours',
-          body: `<p>Dear User,</p>
-<p>We have detected <span class="highlight">unusual sign-in activity</span> on your Microsoft 365 account. For your protection, your account will be <span class="highlight">suspended within 24 hours</span> unless you verify your identity.</p>
-<p>Please click the button below to verify your account immediately:</p>
-<div class="email-btn-fake">&#128274; Verify My Account Now</div>
-<p style="margin-top:1rem; font-size:0.8rem; color:#64748b;">If you did not request this, please verify anyway to ensure account safety.<br>Microsoft 365 Security Team</p>`
+          body: `<p>Dear User,</p><p>We have detected <span class="highlight">unusual sign-in activity</span> on your Microsoft 365 account. Your account will be <span class="highlight">suspended within 24 hours</span> unless you verify your identity.</p><p>Please click the button below to verify your account immediately:</p><div class="email-btn-fake">&#128274; Verify My Account Now</div><p style="margin-top:1rem;font-size:0.8rem;color:#64748b;">If you did not request this, please verify anyway to ensure account safety.<br>Microsoft 365 Security Team</p>`
         },
         narrative: '<strong>9:02 AM — Monday morning.</strong> You\'re catching up on emails when this one lands in your inbox. It\'s marked as high importance. What do you do first?',
         choices: [
-          { text: 'Click "Verify My Account Now" immediately — I can\'t lose access!', correct: false,
-            feedback: 'Clicking links in suspicious emails is extremely dangerous. This could lead to a credential-harvesting page designed to steal your username and password. The urgency is a classic manipulation tactic.' },
-          { text: 'Check the sender\'s email address carefully before doing anything.', correct: true,
-            feedback: 'Excellent instinct! Looking at the sender address "micros0ft-365.com" reveals a lookalike domain — note the zero replacing the "o" in microsoft. This is a classic phishing indicator.' },
-          { text: 'Forward it to my whole team to warn them about the account issue.', correct: false,
-            feedback: 'Forwarding phishing emails spreads the threat! A colleague might click the link. Never forward suspicious emails — report them through proper channels instead.' },
-          { text: 'Reply to the email asking if it\'s legitimate.', correct: false,
-            feedback: 'Replying confirms your email address is active and monitored — valuable information for attackers. Never reply to suspicious emails; report them to IT Security through a known channel.' }
+          { text: 'Click "Verify My Account Now" immediately — I can\'t lose access!', correct: false, feedback: 'Clicking links in suspicious emails is extremely dangerous. This could lead to a credential-harvesting page. The urgency is a classic manipulation tactic.' },
+          { text: 'Check the sender\'s email address carefully before doing anything.', correct: true, feedback: 'Excellent instinct! "micros0ft-365.com" reveals a lookalike domain — note the zero replacing the "o" in microsoft. This is a classic phishing indicator.' },
+          { text: 'Forward it to my whole team to warn them about the account issue.', correct: false, feedback: 'Forwarding phishing emails spreads the threat! A colleague might click the link. Never forward suspicious emails — report them through proper channels instead.' },
+          { text: 'Reply to the email asking if it\'s legitimate.', correct: false, feedback: 'Replying confirms your email address is active — valuable information for attackers. Never reply to suspicious emails; report them to IT Security.' }
         ]
       },
       {
         visual: 'none',
-        narrative: 'You examined the sender address: <strong>IT-Security@micros0ft-365.com</strong>. You notice the "0" instead of "o" in "microsoft." You hover over the "Verify" link and see it points to: <strong class="red-flag">http://login-365verify.sketchy-domain.ru/auth</strong>. What\'s your next step?',
+        narrative: 'You examined the sender address: <strong>IT-Security@micros0ft-365.com</strong>. You notice the "0" instead of "o". You hover over the "Verify" link and see it points to: <strong class="red-flag">http://login-365verify.sketchy-domain.ru/auth</strong>. What\'s your next step?',
         choices: [
-          { text: 'Report the email using the "Report Phishing" button and alert IT Security.', correct: true,
-            feedback: 'This is the correct action. Reporting helps your security team block the threat for the entire organisation, protecting everyone. Always use official reporting tools.' },
-          { text: 'Just delete the email and move on with your day.', correct: false,
-            feedback: 'Deleting it protects you, but not your colleagues. Others may have received the same email. Reporting ensures the security team can investigate, block the sender, and warn others.' },
-          { text: 'Open the link in an incognito window to safely investigate.', correct: false,
-            feedback: 'Incognito mode does NOT protect you from malicious websites. The page could still steal credentials you enter, download malware, or exploit browser vulnerabilities. Leave investigation to the security team.' }
+          { text: 'Report the email using the "Report Phishing" button and alert IT Security.', correct: true, feedback: 'This is the correct action. Reporting helps your security team block the threat for the entire organisation, protecting everyone.' },
+          { text: 'Just delete the email and move on with your day.', correct: false, feedback: 'Deleting it protects you, but not your colleagues. Others may have received the same email. Reporting ensures the security team can investigate and warn others.' },
+          { text: 'Open the link in an incognito window to safely investigate.', correct: false, feedback: 'Incognito mode does NOT protect you from malicious websites. Leave investigation to the security team.' }
         ]
       },
       {
         visual: 'none',
-        narrative: 'IT Security confirms this was a phishing attack targeting your organisation. Several colleagues also received it. Because you reported it quickly, the security team was able to <strong>block the malicious domain</strong> and <strong>send an organisation-wide alert</strong> before anyone fell victim. One last question — how could you verify a legitimate account concern in the future?',
+        narrative: 'IT Security confirms this was a phishing attack. Because you reported it quickly, the team was able to <strong>block the malicious domain</strong> and <strong>send an organisation-wide alert</strong>. Final question — how could you verify a legitimate account concern in future?',
         choices: [
-          { text: 'Navigate directly to portal.office.com by typing it in the browser, or contact IT through a known phone number.', correct: true,
-            feedback: 'Always go directly to known, trusted URLs or contact IT through established channels. Never use links in emails to access sensitive accounts.' },
-          { text: 'Search Google for "Microsoft 365 login" and click the first result.', correct: false,
-            feedback: 'Attackers can buy ads that appear above legitimate results. Always type known URLs directly rather than relying on search engines for login pages.' },
-          { text: 'Click the link in the email but use a fake password to test it.', correct: false,
-            feedback: 'Even entering fake data on a phishing page is risky — the page may deploy malware, track your IP, or use the interaction to further the attack.' }
+          { text: 'Navigate directly to portal.office.com by typing it in the browser, or contact IT through a known phone number.', correct: true, feedback: 'Always go directly to known, trusted URLs or contact IT through established channels. Never use links in emails to access sensitive accounts.' },
+          { text: 'Search Google for "Microsoft 365 login" and click the first result.', correct: false, feedback: 'Attackers can buy ads that appear above legitimate results. Always type known URLs directly rather than relying on search engines for login pages.' },
+          { text: 'Click the link in the email but use a fake password to test it.', correct: false, feedback: 'Even entering fake data on a phishing page is risky — the page may deploy malware or use the interaction to further the attack.' }
         ]
       }
     ]
@@ -1168,11 +1210,11 @@ const scenarios = [
     badge: 'DEVICE CODE PHISHING',
     badgeColor: '#f59e0b',
     lessons: [
-      'Device code authentication requests you didn\'t initiate are almost always attacks.',
-      'Entering a device code grants the attacker a token to access your account — even with MFA enabled.',
-      'Attackers often impersonate IT support via Teams, email, or phone to deliver the code.',
-      'Always verify unexpected authentication requests by contacting IT through a known, trusted channel.',
-      'Legitimate IT support will never ask you to enter a code you didn\'t generate yourself.'
+      "Device code authentication requests you didn't initiate are almost always attacks.",
+      "Entering a device code grants the attacker a token to access your account — even with MFA enabled.",
+      "Attackers often impersonate IT support via Teams, email, or phone to deliver the code.",
+      "Always verify unexpected authentication requests by contacting IT through a known, trusted channel.",
+      "Legitimate IT support will never ask you to enter a code you didn't generate yourself."
     ],
     steps: [
       {
@@ -1181,47 +1223,35 @@ const scenarios = [
           platform: 'Microsoft Teams',
           channelIcon: '&#128172;',
           messages: [
-            { sender: 'Alex Turner — IT Helpdesk', avatar: 'AT', avatarColor: '#8b5cf6',
-              text: 'Hi there! We\'re rolling out a critical security update to all Office 365 accounts this afternoon. I need to verify your identity to apply it.' },
-            { sender: 'Alex Turner — IT Helpdesk', avatar: 'AT', avatarColor: '#8b5cf6',
-              text: 'Please go to <strong>microsoft.com/devicelogin</strong> and enter this code. It\'ll only take 30 seconds:' }
+            { sender: 'Alex Turner — IT Helpdesk', avatar: 'AT', avatarColor: '#8b5cf6', text: "Hi there! We're rolling out a critical security update to all Office 365 accounts this afternoon. I need to verify your identity to apply it." },
+            { sender: 'Alex Turner — IT Helpdesk', avatar: 'AT', avatarColor: '#8b5cf6', text: 'Please go to <strong>microsoft.com/devicelogin</strong> and enter this code. It\'ll only take 30 seconds:' }
           ]
         },
-        narrative: '<strong>2:15 PM — You receive a Teams message</strong> from someone claiming to be from IT Helpdesk. They say there\'s a critical security update. You also notice this person isn\'t someone you\'ve worked with before. What do you do?',
         deviceCode: 'GXR4-FK9M',
+        narrative: '<strong>2:15 PM — You receive a Teams message</strong> from someone claiming to be from IT Helpdesk. They say there\'s a critical security update. You also notice this person isn\'t someone you\'ve worked with before. What do you do?',
         choices: [
-          { text: 'Go to microsoft.com/devicelogin and enter the code to get the security update.', correct: false,
-            feedback: 'Entering this code would authenticate the attacker\'s session with YOUR credentials! Device code phishing bypasses MFA because you are completing the authentication on their behalf.' },
-          { text: 'Ask "Alex" for more details about the update before entering anything.', correct: false,
-            feedback: 'Engaging with the attacker gives them more opportunities to social engineer you. They\'ll likely have convincing answers prepared. Instead, verify through a trusted, independent channel.' },
-          { text: 'Don\'t enter anything. Verify by calling the IT Helpdesk using the number on your company intranet.', correct: true,
-            feedback: 'This is the safest approach. Verifying through a trusted, independent channel protects you from social engineering. Real IT will never ask you to enter device codes you didn\'t generate.' },
-          { text: 'Enter the code but use a different browser profile to be safe.', correct: false,
-            feedback: 'A different browser profile provides no protection here. The moment you enter the code and authenticate, the attacker receives a valid token for your account, regardless of which browser you use.' }
+          { text: 'Go to microsoft.com/devicelogin and enter the code to get the security update.', correct: false, feedback: "Entering this code would authenticate the attacker's session with YOUR credentials! Device code phishing bypasses MFA because you are completing the authentication on their behalf." },
+          { text: 'Ask "Alex" for more details about the update before entering anything.', correct: false, feedback: "Engaging with the attacker gives them more opportunities to social engineer you. They'll likely have convincing answers prepared. Verify through a trusted, independent channel instead." },
+          { text: "Don't enter anything. Verify by calling the IT Helpdesk using the number on your company intranet.", correct: true, feedback: "This is the safest approach. Verifying through a trusted, independent channel protects you from social engineering. Real IT will never ask you to enter device codes you didn't generate." },
+          { text: 'Enter the code but use a different browser profile to be safe.', correct: false, feedback: 'A different browser profile provides no protection here. The moment you enter the code and authenticate, the attacker receives a valid token for your account.' }
         ]
       },
       {
         visual: 'none',
-        narrative: 'You called the IT Helpdesk using the verified number from your intranet. They confirm: <strong class="red-flag">they did not send that message and there is no security update rollout today.</strong> The "Alex Turner" account appears to be a compromised or impersonated account. The helpdesk asks what you\'d like to do next. What\'s your call?',
+        narrative: 'You called the IT Helpdesk using the verified number from your intranet. They confirm: <strong class="red-flag">they did not send that message and there is no security update rollout today.</strong> What\'s your call?',
         choices: [
-          { text: 'Report the incident and let IT investigate the compromised account.', correct: true,
-            feedback: 'Reporting allows the security team to disable the compromised account, investigate the scope of the attack, and alert other potential targets. Time is critical in these situations.' },
-          { text: 'Block "Alex Turner" on Teams and forget about it.', correct: false,
-            feedback: 'Blocking protects you, but the attacker is likely targeting others right now. Without a report, IT can\'t stop the broader attack or secure the compromised account.' },
-          { text: 'Message "Alex" back to tell them you know it\'s a scam.', correct: false,
-            feedback: 'Tipping off the attacker lets them cover their tracks, change tactics, or accelerate attacks on other targets. Report silently and let the security team handle it.' }
+          { text: 'Report the incident and let IT investigate the compromised account.', correct: true, feedback: 'Reporting allows the security team to disable the compromised account, investigate the scope, and alert other potential targets. Time is critical.' },
+          { text: 'Block "Alex Turner" on Teams and forget about it.', correct: false, feedback: "Blocking protects you, but the attacker is likely targeting others right now. Without a report, IT can't stop the broader attack." },
+          { text: 'Message "Alex" back to tell them you know it\'s a scam.', correct: false, feedback: 'Tipping off the attacker lets them cover their tracks or change tactics. Report silently and let the security team handle it.' }
         ]
       },
       {
         visual: 'none',
-        narrative: 'IT Security investigates and finds that <strong>"Alex Turner\'s"</strong> account was compromised through an earlier phishing attack. The attacker had been sending device code requests to dozens of employees. Because you reported it, IT was able to revoke all active sessions and prevent data exfiltration. <br><br><strong>Final question:</strong> What makes device code phishing especially dangerous?',
+        narrative: 'IT Security finds that <strong>"Alex Turner\'s"</strong> account was compromised through an earlier phishing attack. The attacker had been sending device code requests to dozens of employees. <br><br><strong>Final question:</strong> What makes device code phishing especially dangerous?',
         choices: [
-          { text: 'It bypasses multi-factor authentication because the victim completes the MFA challenge themselves.', correct: true,
-            feedback: 'Exactly right. In device code phishing, YOU complete the full authentication — including MFA — and the attacker receives the resulting token. This is why it\'s so dangerous and why you must never enter codes you didn\'t generate.' },
-          { text: 'It installs malware on your device.', correct: false,
-            feedback: 'Device code phishing doesn\'t typically involve malware. Its power lies in getting you to authenticate on the attacker\'s behalf, granting them a valid access token without touching your device.' },
-          { text: 'It only works on mobile devices.', correct: false,
-            feedback: 'Device code phishing works on any device and any browser. The microsoft.com/devicelogin page is a legitimate Microsoft feature — the attack exploits the trust users place in it.' }
+          { text: 'It bypasses multi-factor authentication because the victim completes the MFA challenge themselves.', correct: true, feedback: "Exactly right. In device code phishing, YOU complete the full authentication — including MFA — and the attacker receives the resulting token. This is why it's so dangerous." },
+          { text: 'It installs malware on your device.', correct: false, feedback: "Device code phishing doesn't typically involve malware. Its power lies in getting you to authenticate on the attacker's behalf." },
+          { text: 'It only works on mobile devices.', correct: false, feedback: 'Device code phishing works on any device and any browser. The microsoft.com/devicelogin page is a legitimate Microsoft feature — the attack exploits the trust users place in it.' }
         ]
       }
     ]
@@ -1237,7 +1267,7 @@ const scenarios = [
     badgeColor: '#8b5cf6',
     lessons: [
       'Legitimate banks and vendors will never pressure you for immediate card details over the phone.',
-      'Caller ID can be spoofed — a familiar number doesn\'t guarantee a legitimate caller.',
+      "Caller ID can be spoofed — a familiar number doesn't guarantee a legitimate caller.",
       'Always hang up and call back using a number from the official website or your records.',
       'Pressure tactics like urgent deadlines, threats of service loss, or angry tone are classic social engineering red flags.',
       'Never read out full card numbers, CVVs, or PINs to anyone who calls you.'
@@ -1253,38 +1283,28 @@ const scenarios = [
         },
         narrative: '<strong>3:30 PM — Your desk phone rings.</strong> The caller claims to be from a vendor your company actually uses. She sounds professional and urgent. How do you respond?',
         choices: [
-          { text: 'Provide the card details — we can\'t afford to lose this service!', correct: false,
-            feedback: 'Never provide payment details to an inbound caller. Scammers research which vendors companies use and create urgency to bypass your critical thinking. This is a classic vishing (voice phishing) attack.' },
-          { text: '"I\'ll need to verify this. Let me call your accounts department using the number we have on file."', correct: true,
-            feedback: 'This is the correct response. Hanging up and calling back on a verified number breaks the scammer\'s control of the conversation. Legitimate vendors will understand and appreciate your caution.' },
-          { text: 'Ask Sarah to verify some account details to prove she\'s legitimate.', correct: false,
-            feedback: 'Scammers often have enough information about your account to sound convincing — they may know your contract number, account manager\'s name, or payment history from prior reconnaissance. Their "verification" proves nothing.' },
-          { text: 'Put her on hold while you quickly check if the payment actually failed.', correct: false,
-            feedback: 'While checking the payment status is reasonable, keeping the scammer on the line maintains their opportunity to pressure you. The safest approach is to end the call completely and call back on a verified number.' }
+          { text: "Provide the card details — we can't afford to lose this service!", correct: false, feedback: "Never provide payment details to an inbound caller. Scammers research which vendors companies use and create urgency to bypass your critical thinking. This is a classic vishing attack." },
+          { text: '"I\'ll need to verify this. Let me call your accounts department using the number we have on file."', correct: true, feedback: "This is the correct response. Hanging up and calling back on a verified number breaks the scammer's control of the conversation. Legitimate vendors will understand and appreciate your caution." },
+          { text: "Ask Sarah to verify some account details to prove she's legitimate.", correct: false, feedback: "Scammers often have enough information to sound convincing — contract number, account manager's name, payment history. Their 'verification' proves nothing." },
+          { text: 'Put her on hold while you quickly check if the payment actually failed.', correct: false, feedback: "While checking is reasonable, keeping the scammer on the line maintains their opportunity to pressure you. The safest approach is to end the call and call back on a verified number." }
         ]
       },
       {
         visual: 'none',
         narrative: 'You told "Sarah" you\'d call back. She became noticeably agitated: <em>"This really can\'t wait — if your services go down, it\'ll affect your entire team. I just need the card number and I can process it in 2 minutes."</em> You notice the <strong class="red-flag">increased pressure and urgency</strong>. What do you do?',
         choices: [
-          { text: 'Stand firm — hang up and call CloudSync using the number from their official website.', correct: true,
-            feedback: 'The escalating pressure is a major red flag. Legitimate businesses never pressure you this way. By hanging up and verifying independently, you maintain control and safety.' },
-          { text: 'Give in because the pressure is mounting and it sounds like a real emergency.', correct: false,
-            feedback: 'The pressure IS the attack. Scammers are trained to escalate urgency precisely when you resist. The more desperate they sound, the more likely it\'s a scam. Never let pressure override your judgement.' },
-          { text: 'Offer to pay via bank transfer instead of card to be safer.', correct: false,
-            feedback: 'Changing the payment method doesn\'t make it safer — you\'d still be sending money to a scammer. The payment method isn\'t the problem; the unverified caller is.' }
+          { text: 'Stand firm — hang up and call CloudSync using the number from their official website.', correct: true, feedback: "The escalating pressure is a major red flag. Legitimate businesses never pressure you this way. By hanging up and verifying independently, you maintain control and safety." },
+          { text: "Give in because the pressure is mounting and it sounds like a real emergency.", correct: false, feedback: "The pressure IS the attack. Scammers are trained to escalate urgency precisely when you resist. The more desperate they sound, the more likely it's a scam." },
+          { text: "Offer to pay via bank transfer instead of card to be safer.", correct: false, feedback: "Changing the payment method doesn't make it safer — you'd still be sending money to a scammer. The payment method isn't the problem; the unverified caller is." }
         ]
       },
       {
         visual: 'none',
-        narrative: 'You called CloudSync on their verified number. Their <em>actual</em> accounts team confirmed: <strong>your payment went through successfully last week and no one named Sarah Jenkins works there.</strong> You immediately reported the attempted scam to your Finance team and IT Security. <br><br><strong>Final question:</strong> What should your company do to prevent future vishing attacks?',
+        narrative: 'You called CloudSync on their verified number. Their <em>actual</em> accounts team confirmed: <strong>your payment went through successfully last week and no one named Sarah Jenkins works there.</strong> <br><br><strong>Final question:</strong> What should your company do to prevent future vishing attacks?',
         choices: [
-          { text: 'Establish a policy that no payment information is ever given to inbound callers, and implement a callback verification procedure.', correct: true,
-            feedback: 'A clear policy removes the ambiguity that scammers exploit. When "we never process payments on inbound calls" is the rule, employees can confidently refuse without worrying about consequences.' },
-          { text: 'Block the phone number that called.', correct: false,
-            feedback: 'Scammers use spoofed numbers and call from different numbers each time. Blocking one number provides minimal protection. Systemic policies and training are far more effective.' },
-          { text: 'Only process payments via email instead of phone.', correct: false,
-            feedback: 'Email-based payment scams (Business Email Compromise) are equally common and dangerous. The solution is verification procedures, not changing the channel.' }
+          { text: 'Establish a policy that no payment information is ever given to inbound callers, and implement a callback verification procedure.', correct: true, feedback: 'A clear policy removes the ambiguity that scammers exploit. When "we never process payments on inbound calls" is the rule, employees can confidently refuse.' },
+          { text: 'Block the phone number that called.', correct: false, feedback: 'Scammers use spoofed numbers and call from different numbers each time. Blocking one number provides minimal protection. Systemic policies and training are far more effective.' },
+          { text: 'Only process payments via email instead of phone.', correct: false, feedback: 'Email-based payment scams (Business Email Compromise) are equally common and dangerous. The solution is verification procedures, not changing the channel.' }
         ]
       }
     ]
@@ -1299,10 +1319,10 @@ const scenarios = [
     badge: 'INSIDER THREAT',
     badgeColor: '#06b6d4',
     lessons: [
-      'Access control processes exist to protect the organisation — there are no "harmless" shortcuts.',
+      "Access control processes exist to protect the organisation — there are no 'harmless' shortcuts.",
       'Even trusted colleagues should follow proper approval procedures for access requests.',
       'Granting unauthorised access can violate compliance requirements and create audit failures.',
-      'Social engineering doesn\'t only come from outsiders — pressure from colleagues can be equally manipulative.',
+      "Social engineering doesn't only come from outsiders — pressure from colleagues can be equally manipulative.",
       'When in doubt, escalate to your manager or the system owner rather than granting access yourself.'
     ],
     steps: [
@@ -1312,22 +1332,16 @@ const scenarios = [
           platform: 'Microsoft Teams',
           channelIcon: '&#128172;',
           messages: [
-            { sender: 'Jordan Rivera — Marketing Manager', avatar: 'JR', avatarColor: '#06b6d4',
-              text: 'Hey! Quick favour — I need access to the customer analytics dashboard ASAP. My access request is stuck in the approval queue and I\'ve got a board presentation at 4 PM.' },
-            { sender: 'Jordan Rivera — Marketing Manager', avatar: 'JR', avatarColor: '#06b6d4',
-              text: 'Can you just share your login or add me as a viewer? It\'s read-only anyway, no harm done. I\'ll submit the proper request afterwards, promise! 🙏' }
+            { sender: 'Jordan Rivera — Marketing Manager', avatar: 'JR', avatarColor: '#06b6d4', text: "Hey! Quick favour — I need access to the customer analytics dashboard ASAP. My access request is stuck in the approval queue and I've got a board presentation at 4 PM." },
+            { sender: 'Jordan Rivera — Marketing Manager', avatar: 'JR', avatarColor: '#06b6d4', text: "Can you just share your login or add me as a viewer? It's read-only anyway, no harm done. I'll submit the proper request afterwards, promise! 🙏" }
           ]
         },
-        narrative: '<strong>1:45 PM — A Teams message from Jordan.</strong> You know Jordan from Marketing — they\'re well-liked and this sounds like a genuine crunch. But they\'re asking you to bypass the access approval process. What do you do?',
+        narrative: "<strong>1:45 PM — A Teams message from Jordan.</strong> You know Jordan from Marketing — they're well-liked and this sounds like a genuine crunch. But they're asking you to bypass the access approval process. What do you do?",
         choices: [
-          { text: 'Share your credentials just this once — Jordan is trustworthy and it\'s read-only.', correct: false,
-            feedback: 'Never share credentials, even with trusted colleagues. Shared credentials make it impossible to audit who accessed what, violate most compliance frameworks, and if anything goes wrong, you are accountable.' },
-          { text: 'Add Jordan as a viewer since it\'s just read-only access — what\'s the harm?', correct: false,
-            feedback: '"Read-only" doesn\'t mean risk-free. Granting unauthorised access bypasses approval workflows that exist for regulatory, legal, and security reasons. Even viewing sensitive customer data requires proper authorisation.' },
-          { text: 'Explain that you can\'t bypass the process, and offer to help expedite their legitimate request.', correct: true,
-            feedback: 'This is the right balance of being helpful and being secure. You can help Jordan contact the approver directly, escalate the urgency, or suggest they ask their manager to fast-track it.' },
-          { text: 'Ignore the message — not your problem.', correct: false,
-            feedback: 'Ignoring the request isn\'t ideal. While you shouldn\'t grant access, being helpful and redirecting Jordan to the right process builds a security-positive culture. Ignoring people can push them to find other, less secure workarounds.' }
+          { text: "Share your credentials just this once — Jordan is trustworthy and it's read-only.", correct: false, feedback: "Never share credentials, even with trusted colleagues. Shared credentials make it impossible to audit who accessed what, violate most compliance frameworks, and if anything goes wrong, you are accountable." },
+          { text: "Add Jordan as a viewer since it's just read-only access — what's the harm?", correct: false, feedback: '"Read-only" doesn\'t mean risk-free. Granting unauthorised access bypasses approval workflows that exist for regulatory, legal, and security reasons.' },
+          { text: "Explain that you can't bypass the process, and offer to help expedite their legitimate request.", correct: true, feedback: "This is the right balance of being helpful and being secure. You can help Jordan contact the approver directly, escalate the urgency, or suggest they ask their manager to fast-track it." },
+          { text: "Ignore the message — not your problem.", correct: false, feedback: "Ignoring the request isn't ideal. Being helpful and redirecting Jordan to the right process builds a security-positive culture. Ignoring people can push them to find less secure workarounds." }
         ]
       },
       {
@@ -1336,32 +1350,24 @@ const scenarios = [
           platform: 'Microsoft Teams',
           channelIcon: '&#128172;',
           messages: [
-            { sender: 'Jordan Rivera — Marketing Manager', avatar: 'JR', avatarColor: '#06b6d4',
-              text: 'Come on, the approval process takes DAYS and this is for the BOARD. My manager already verbally approved it, it\'s just the ticket that\'s pending. You\'d really make me look bad in front of the directors?' },
-            { sender: 'Jordan Rivera — Marketing Manager', avatar: 'JR', avatarColor: '#06b6d4',
-              text: 'Look, I won\'t tell anyone. Just 20 minutes of access, then you can revoke it. Please? 😩' }
+            { sender: 'Jordan Rivera — Marketing Manager', avatar: 'JR', avatarColor: '#06b6d4', text: "Come on, the approval process takes DAYS and this is for the BOARD. My manager already verbally approved it, it's just the ticket that's pending. You'd really make me look bad in front of the directors?" },
+            { sender: 'Jordan Rivera — Marketing Manager', avatar: 'JR', avatarColor: '#06b6d4', text: "Look, I won't tell anyone. Just 20 minutes of access, then you can revoke it. Please? 😩" }
           ]
         },
         narrative: 'Jordan is doubling down with <strong class="red-flag">emotional pressure and claims of verbal approval</strong>. This is getting uncomfortable. What\'s your move?',
         choices: [
-          { text: 'Give in — the emotional pressure is too much and they probably do have approval.', correct: false,
-            feedback: '"Verbal approval" is unverifiable and meaningless from a compliance perspective. The escalating pressure, emotional appeals, and secrecy ("I won\'t tell anyone") are textbook social engineering tactics — even from insiders.' },
-          { text: 'Politely hold firm and suggest Jordan\'s manager contact the system owner to expedite approval.', correct: true,
-            feedback: 'If the manager truly approved it, they can escalate it formally in minutes. This keeps the process intact while giving Jordan a legitimate fast path. You\'re being helpful without being compliant with a bypass.' },
-          { text: 'Ask your own manager if it\'s OK to make an exception.', correct: false,
-            feedback: 'While escalating shows good instinct, asking your manager to approve a bypass still circumvents the established process. The correct path is to help Jordan work within the system, not to find someone else willing to break it.' }
+          { text: "Give in — the emotional pressure is too much and they probably do have approval.", correct: false, feedback: '"Verbal approval" is unverifiable and meaningless from a compliance perspective. The escalating pressure, emotional appeals, and secrecy are textbook social engineering tactics — even from insiders.' },
+          { text: "Politely hold firm and suggest Jordan's manager contact the system owner to expedite approval.", correct: true, feedback: "If the manager truly approved it, they can escalate it formally in minutes. This keeps the process intact while giving Jordan a legitimate fast path." },
+          { text: "Ask your own manager if it's OK to make an exception.", correct: false, feedback: "While escalating shows good instinct, asking your manager to approve a bypass still circumvents the established process. The correct path is to help Jordan work within the system." }
         ]
       },
       {
         visual: 'none',
-        narrative: 'Jordan\'s manager fast-tracked the approval through the proper channel, and Jordan got access within 30 minutes — in time for the board presentation. Afterwards, Jordan thanked you for steering them the right way. <br><br>Later, IT Security mentioned they\'d seen a recent increase in <strong>unauthorised access attempts</strong> across the company. Your diligence helped keep your organisation compliant and secure.<br><br><strong>Final question:</strong> Why are insider bypass requests particularly dangerous even when well-intentioned?',
+        narrative: "Jordan's manager fast-tracked the approval through the proper channel, and Jordan got access within 30 minutes — in time for the board presentation. <br><br>IT Security mentioned a recent increase in <strong>unauthorised access attempts</strong>. Your diligence helped keep your organisation compliant and secure. <br><br><strong>Final question:</strong> Why are insider bypass requests particularly dangerous even when well-intentioned?",
         choices: [
-          { text: 'They erode access control culture — every exception makes the next bypass easier to justify.', correct: true,
-            feedback: 'Exactly. One "harmless" shortcut normalises bypassing controls. Over time, this creates an environment where proper procedures are seen as obstacles rather than protections — which is exactly what malicious insiders exploit.' },
-          { text: 'Because the person asking is always a malicious insider.', correct: false,
-            feedback: 'Most bypass requests come from well-meaning people under time pressure — like Jordan. The danger isn\'t malicious intent; it\'s the precedent it sets and the compliance/audit gaps it creates.' },
-          { text: 'It\'s only dangerous if the person gets write access.', correct: false,
-            feedback: 'Even read-only access to sensitive data (customer records, financial data, strategic plans) can cause serious harm if it reaches the wrong eyes. Access level doesn\'t determine risk — authorisation does.' }
+          { text: "They erode access control culture — every exception makes the next bypass easier to justify.", correct: true, feedback: 'Exactly. One "harmless" shortcut normalises bypassing controls. Over time, this creates an environment where proper procedures are seen as obstacles rather than protections.' },
+          { text: "Because the person asking is always a malicious insider.", correct: false, feedback: "Most bypass requests come from well-meaning people under time pressure — like Jordan. The danger isn't malicious intent; it's the precedent it sets." },
+          { text: "It's only dangerous if the person gets write access.", correct: false, feedback: "Even read-only access to sensitive data (customer records, financial data, strategic plans) can cause serious harm. Access level doesn't determine risk — authorisation does." }
         ]
       }
     ]
@@ -1369,7 +1375,8 @@ const scenarios = [
 ];
 
 // ===== STATE =====
-let state = {
+var state = {
+  lang: localStorage.getItem('cq_lang') || 'en',
   playerName: '',
   totalScore: 0,
   streak: 0,
@@ -1381,68 +1388,91 @@ let state = {
   currentStep: 0
 };
 
-// ===== WELCOME / NAME INPUT =====
-const nameInput = document.getElementById('playerName');
-const startBtn = document.getElementById('startBtn');
+// ===== TRANSLATION HELPER =====
+function t(key) { return (LANG[state.lang] && LANG[state.lang][key]) || LANG.en[key] || key; }
 
-nameInput.addEventListener('input', () => {
-  const val = nameInput.value.trim();
-  if (val.length >= 2) {
-    startBtn.classList.add('enabled');
-  } else {
-    startBtn.classList.remove('enabled');
-  }
+// ===== LANGUAGE SWITCHER =====
+function setLang(code) {
+  state.lang = code;
+  localStorage.setItem('cq_lang', code);
+  // Update picker buttons
+  document.querySelectorAll('.lang-btn').forEach(function(btn) {
+    btn.classList.remove('active');
+    if (btn.getAttribute('onclick') === "setLang('" + code + "')") btn.classList.add('active');
+  });
+  // Update welcome screen text
+  document.getElementById('tagline').textContent = t('tagline');
+  document.getElementById('welcomeTitle').textContent = t('welcomeTitle');
+  document.getElementById('welcomeDesc').textContent = t('welcomeDesc');
+  document.getElementById('nameLabel').textContent = t('nameLabel');
+  document.getElementById('playerName').placeholder = t('namePlaceholder');
+  document.getElementById('startBtn').textContent = t('startBtn');
+  // Update score bar labels
+  document.getElementById('lblScore').textContent = t('scoreLabel');
+  document.getElementById('lblScenarios').textContent = t('scenariosLabel');
+  document.getElementById('lblStreak').textContent = t('streakLabel');
+}
+
+// Apply saved language on load
+setLang(state.lang);
+
+// ===== WELCOME / NAME INPUT =====
+var nameInput = document.getElementById('playerName');
+var startBtn = document.getElementById('startBtn');
+
+nameInput.addEventListener('input', function() {
+  if (nameInput.value.trim().length >= 2) startBtn.classList.add('enabled');
+  else startBtn.classList.remove('enabled');
 });
 
-nameInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && nameInput.value.trim().length >= 2) {
-    beginTraining();
-  }
+nameInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && nameInput.value.trim().length >= 2) beginTraining();
 });
 
 function beginTraining() {
   state.playerName = nameInput.value.trim();
   if (state.playerName.length < 2) return;
-  // Calculate max possible score
-  state.maxPossible = scenarios.reduce((sum, s) => sum + s.steps.length * 100, 0);
+  var scenarios = getScenarios();
+  state.maxPossible = scenarios.reduce(function(sum, s) { return sum + s.steps.length * 100; }, 0);
   document.getElementById('scoreBar').style.display = '';
+  updateScoreBar();
   renderMenu();
   showScreen('menuScreen');
 }
 
 // ===== RENDER MENU =====
 function renderMenu() {
-  const grid = document.getElementById('scenarioGrid');
-  const allDone = state.scenariosDone >= 4;
-  grid.innerHTML = scenarios.map(s => {
-    const done = state.completed[s.id];
-    return `<div class="scenario-card ${done ? 'completed' : ''}" style="--card-accent:${s.color}" onclick="startScenario('${s.id}')">
-      <div class="card-icon">${s.icon}</div>
-      <div class="card-title">${s.title}</div>
-      <div class="card-desc">${s.desc}</div>
-      <div class="card-difficulty" style="color:${s.color}">
-        <span>${s.difficulty === 'Hard' ? '&#9733;&#9733;&#9733;' : '&#9733;&#9733;'}</span>
-        ${s.difficulty}
-      </div>
-    </div>`;
+  var scenarios = getScenarios();
+  var grid = document.getElementById('scenarioGrid');
+  var allDone = state.scenariosDone >= 4;
+  grid.innerHTML = scenarios.map(function(s) {
+    var done = state.completed[s.id];
+    var diff = (s.difficulty === 'Hard' || s.difficulty === LANG[state.lang].diffHard) ? '&#9733;&#9733;&#9733;' : '&#9733;&#9733;';
+    return '<div class="scenario-card ' + (done ? 'completed' : '') + '" style="--card-accent:' + s.color + '" onclick="startScenario(\'' + s.id + '\')">' +
+      '<div class="card-icon">' + s.icon + '</div>' +
+      '<div class="card-title">' + s.title + '</div>' +
+      '<div class="card-desc">' + s.desc + '</div>' +
+      '<div class="card-difficulty" style="color:' + s.color + '"><span>' + diff + '</span> ' + s.difficulty + '</div>' +
+      (done ? '<div style="position:absolute;top:12px;right:12px;font-size:0.65rem;font-weight:700;color:var(--accent-green);background:rgba(16,185,129,0.1);padding:3px 8px;border-radius:4px;letter-spacing:1px;">' + t('completedBadge') + '</div>' : '') +
+      '</div>';
   }).join('');
 
-  // Show certificate button if all done
-  const existingCertBtn = document.getElementById('menuCertBtn');
+  var existingCertBtn = document.getElementById('menuCertBtn');
   if (existingCertBtn) existingCertBtn.remove();
   if (allDone) {
-    const btn = document.createElement('div');
+    var btn = document.createElement('div');
     btn.id = 'menuCertBtn';
     btn.style.textAlign = 'center';
     btn.style.marginTop = '2rem';
-    btn.innerHTML = `<button class="download-cert-btn" onclick="showCompletion()">&#127891; View Your Certificate</button>`;
+    btn.innerHTML = '<button class="download-cert-btn" onclick="showCompletion()">' + t('viewCertBtn') + '</button>';
     grid.parentNode.appendChild(btn);
   }
 }
 
 // ===== START SCENARIO =====
 function startScenario(id) {
-  state.currentScenario = scenarios.find(s => s.id === id);
+  var scenarios = getScenarios();
+  state.currentScenario = scenarios.find(function(s) { return s.id === id; });
   state.currentStep = 0;
   if (!state.scenarioScores[id]) state.scenarioScores[id] = 0;
   showScreen('scenarioScreen');
@@ -1451,99 +1481,76 @@ function startScenario(id) {
 
 // ===== RENDER STEP =====
 function renderStep() {
-  const sc = state.currentScenario;
-  const step = sc.steps[state.currentStep];
-  const total = sc.steps.length;
+  var sc = state.currentScenario;
+  var step = sc.steps[state.currentStep];
+  var total = sc.steps.length;
 
   document.getElementById('sceneBadge').textContent = sc.badge;
   document.getElementById('sceneBadge').style.background = sc.badgeColor + '22';
   document.getElementById('sceneBadge').style.color = sc.badgeColor;
   document.getElementById('sceneTitle').textContent = sc.title;
-  document.getElementById('sceneStep').textContent = `${state.currentStep + 1} / ${total}`;
+  document.getElementById('sceneStep').textContent = (state.currentStep + 1) + ' / ' + total;
   document.getElementById('progressFill').style.width = ((state.currentStep + 1) / total * 100) + '%';
+  document.getElementById('continueBtn').textContent = t('continueBtn');
 
-  let html = '';
+  var html = '';
 
-  // Visual
   if (step.visual === 'email') {
-    const e = step.emailData;
-    html += `<div class="email-mockup">
-      <div class="email-toolbar">
-        <div class="email-dot" style="background:#ef4444"></div>
-        <div class="email-dot" style="background:#f59e0b"></div>
-        <div class="email-dot" style="background:#10b981"></div>
-        <span class="email-toolbar-title">Outlook — Inbox</span>
-      </div>
-      <div class="email-header-row"><span class="email-label">From:</span><span class="email-value suspicious">${e.from}</span></div>
-      <div class="email-header-row"><span class="email-label">To:</span><span class="email-value">${e.to}</span></div>
-      <div class="email-header-row"><span class="email-label">Subject:</span><span class="email-value">${e.subject}</span></div>
-      <div class="email-body-content">${e.body}</div>
-    </div>`;
+    var e = step.emailData;
+    html += '<div class="email-mockup">' +
+      '<div class="email-toolbar"><div class="email-dot" style="background:#ef4444"></div><div class="email-dot" style="background:#f59e0b"></div><div class="email-dot" style="background:#10b981"></div><span class="email-toolbar-title">' + t('outlookInbox') + '</span></div>' +
+      '<div class="email-header-row"><span class="email-label">' + t('emailFrom') + '</span><span class="email-value suspicious">' + e.from + '</span></div>' +
+      '<div class="email-header-row"><span class="email-label">' + t('emailTo') + '</span><span class="email-value">' + e.to + '</span></div>' +
+      '<div class="email-header-row"><span class="email-label">' + t('emailSubject') + '</span><span class="email-value">' + e.subject + '</span></div>' +
+      '<div class="email-body-content">' + e.body + '</div></div>';
   } else if (step.visual === 'phone') {
-    const p = step.phoneData;
-    html += `<div class="phone-mockup">
-      <div class="phone-statusbar"><span>3:30 PM</span><span>&#128267; 4G</span></div>
-      <div class="phone-caller">
-        <div class="phone-avatar">&#128100;</div>
-        <div class="phone-caller-name">${p.caller}</div>
-        <div class="phone-caller-number">${p.number}</div>
-        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">${p.subtitle}</div>
-      </div>
-      <div class="phone-transcript">${p.transcript}</div>
-    </div>`;
+    var p = step.phoneData;
+    html += '<div class="phone-mockup"><div class="phone-statusbar"><span>3:30 PM</span><span>&#128267; 4G</span></div>' +
+      '<div class="phone-caller"><div class="phone-avatar">&#128100;</div>' +
+      '<div class="phone-caller-name">' + p.caller + '</div>' +
+      '<div class="phone-caller-number">' + p.number + '</div>' +
+      '<div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem;">' + p.subtitle + '</div></div>' +
+      '<div class="phone-transcript">' + p.transcript + '</div></div>';
   } else if (step.visual === 'chat') {
-    const c = step.chatData;
-    html += `<div class="chat-mockup">
-      <div class="chat-header-bar">${c.channelIcon} ${c.platform}</div>
-      <div class="chat-messages">
-        ${c.messages.map(m => `<div class="chat-msg">
-          <div class="chat-avatar" style="background:${m.avatarColor}">${m.avatar}</div>
-          <div><div class="chat-sender">${m.sender}</div><div class="chat-bubble">${m.text}</div></div>
-        </div>`).join('')}
-      </div>
-    </div>`;
+    var c = step.chatData;
+    html += '<div class="chat-mockup"><div class="chat-header-bar">' + c.channelIcon + ' ' + c.platform + '</div><div class="chat-messages">' +
+      c.messages.map(function(m) {
+        return '<div class="chat-msg"><div class="chat-avatar" style="background:' + m.avatarColor + '">' + m.avatar + '</div>' +
+          '<div><div class="chat-sender">' + m.sender + '</div><div class="chat-bubble">' + m.text + '</div></div></div>';
+      }).join('') + '</div></div>';
   }
 
-  // Device code box
   if (step.deviceCode) {
-    html += `<div class="device-code-box">
-      <div class="device-code-label">Enter this code to authenticate</div>
-      <div class="device-code-value">${step.deviceCode}</div>
-      <div class="device-code-url">microsoft.com/devicelogin</div>
-    </div>`;
+    html += '<div class="device-code-box"><div class="device-code-label">' + t('deviceCodeLabel') + '</div>' +
+      '<div class="device-code-value">' + step.deviceCode + '</div>' +
+      '<div class="device-code-url">microsoft.com/devicelogin</div></div>';
   }
 
-  // Narrative
-  html += `<div class="narrative">${step.narrative}</div>`;
+  html += '<div class="narrative">' + step.narrative + '</div>';
 
-  // Choices
-  const letters = ['A', 'B', 'C', 'D'];
-  html += `<div class="choices" id="choicesContainer">
-    ${step.choices.map((c, i) => `<button class="choice-btn" onclick="makeChoice(${i})" data-idx="${i}">
-      <span class="choice-letter">${letters[i]}</span>
-      <span>${c.text}</span>
-    </button>`).join('')}
-  </div>`;
+  var letters = ['A','B','C','D'];
+  html += '<div class="choices" id="choicesContainer">' +
+    step.choices.map(function(ch, i) {
+      return '<button class="choice-btn" onclick="makeChoice(' + i + ')" data-idx="' + i + '">' +
+        '<span class="choice-letter">' + letters[i] + '</span><span>' + ch.text + '</span></button>';
+    }).join('') + '</div>';
 
   document.getElementById('sceneBody').innerHTML = html;
   document.getElementById('feedbackPanel').className = 'feedback-panel';
-  document.getElementById('feedbackPanel').classList.remove('show');
   document.getElementById('continueBtn').classList.remove('show');
 }
 
 // ===== MAKE CHOICE =====
 function makeChoice(idx) {
-  const sc = state.currentScenario;
-  const step = sc.steps[state.currentStep];
-  const choice = step.choices[idx];
+  var sc = state.currentScenario;
+  var step = sc.steps[state.currentStep];
+  var choice = step.choices[idx];
 
-  // Disable all buttons
-  document.querySelectorAll('.choice-btn').forEach(btn => {
-    btn.disabled = true;
-    btn.style.pointerEvents = 'none';
+  document.querySelectorAll('.choice-btn').forEach(function(btn) {
+    btn.disabled = true; btn.style.pointerEvents = 'none';
   });
 
-  const chosenBtn = document.querySelector(`.choice-btn[data-idx="${idx}"]`);
+  var chosenBtn = document.querySelector('.choice-btn[data-idx="' + idx + '"]');
 
   if (choice.correct) {
     chosenBtn.classList.add('correct');
@@ -1554,11 +1561,8 @@ function makeChoice(idx) {
   } else {
     chosenBtn.classList.add('wrong');
     state.streak = 0;
-    // Highlight correct answer
-    step.choices.forEach((c, i) => {
-      if (c.correct) {
-        document.querySelector(`.choice-btn[data-idx="${i}"]`).classList.add('correct');
-      }
+    step.choices.forEach(function(c, i) {
+      if (c.correct) document.querySelector('.choice-btn[data-idx="' + i + '"]').classList.add('correct');
     });
     showFeedback(false, choice.feedback);
   }
@@ -1569,255 +1573,206 @@ function makeChoice(idx) {
 
 // ===== SHOW FEEDBACK =====
 function showFeedback(good, text) {
-  const panel = document.getElementById('feedbackPanel');
-  panel.className = `feedback-panel show ${good ? 'good' : 'bad'}`;
-  document.getElementById('fbTitle').textContent = good ? '&#10004; Correct!' : '&#10008; Not the best choice';
-  document.getElementById('fbTitle').innerHTML = good ? '&#10004; Correct!' : '&#10008; Not the best choice';
+  var panel = document.getElementById('feedbackPanel');
+  panel.className = 'feedback-panel show ' + (good ? 'good' : 'bad');
+  document.getElementById('fbTitle').innerHTML = good ? t('correct') : t('wrong');
   document.getElementById('fbText').textContent = text;
 }
 
 // ===== ADVANCE =====
 function advanceScene() {
-  const sc = state.currentScenario;
+  var sc = state.currentScenario;
   state.currentStep++;
-
   if (state.currentStep >= sc.steps.length) {
-    // Scenario complete
     state.completed[sc.id] = true;
     state.scenariosDone = Object.keys(state.completed).length;
     updateScoreBar();
     showSummary();
   } else {
     renderStep();
-    // Scroll to top of scene
     document.getElementById('scenarioScreen').scrollIntoView({ behavior: 'smooth' });
   }
 }
 
 // ===== SHOW SUMMARY =====
 function showSummary() {
-  const sc = state.currentScenario;
-  const scScore = state.scenarioScores[sc.id] || 0;
-  const scMax = sc.steps.length * 100;
-  const icon = scScore === scMax ? '&#127942;' : '&#128170;';
-  const allDone = state.scenariosDone >= 4;
+  var sc = state.currentScenario;
+  var scScore = state.scenarioScores[sc.id] || 0;
+  var scMax = sc.steps.length * 100;
+  var icon = scScore === scMax ? '&#127942;' : '&#128170;';
+  var allDone = state.scenariosDone >= 4;
 
-  document.getElementById('summaryScreen').innerHTML = `
-    <div class="summary-container">
-      <div class="summary-icon">${icon}</div>
-      <div class="summary-title">Scenario Complete!</div>
-      <div class="summary-subtitle">${sc.title} — ${sc.badge}</div>
-      <div class="summary-stats">
-        <div class="summary-stat">
-          <div class="stat-value" style="color:var(--accent-green)">${scScore}/${scMax}</div>
-          <div class="stat-label">Scenario Score</div>
-        </div>
-        <div class="summary-stat">
-          <div class="stat-value" style="color:var(--accent-cyan)">${state.scenariosDone}/4</div>
-          <div class="stat-label">Scenarios Done</div>
-        </div>
-        <div class="summary-stat">
-          <div class="stat-value" style="color:var(--accent-amber)">${state.totalScore}</div>
-          <div class="stat-label">Total Score</div>
-        </div>
-      </div>
-      <div class="summary-lessons">
-        <h3>&#128218; Key Takeaways</h3>
-        <ul>
-          ${sc.lessons.map(l => `<li>${l}</li>`).join('')}
-        </ul>
-      </div>
-      ${allDone
-        ? `<button class="continue-btn show" onclick="showCompletion()" style="display:inline-block;margin-bottom:0.75rem;">View Certificate &rarr;</button><br>`
-        : ''}
-      <button class="btn-back-menu" onclick="backToMenu()">&#8592; Back to Scenarios</button>
-    </div>`;
+  document.getElementById('summaryScreen').innerHTML =
+    '<div class="summary-container">' +
+    '<div class="summary-icon">' + icon + '</div>' +
+    '<div class="summary-title">' + t('scenarioComplete') + '</div>' +
+    '<div class="summary-subtitle">' + sc.title + ' — ' + sc.badge + '</div>' +
+    '<div class="summary-stats">' +
+      '<div class="summary-stat"><div class="stat-value" style="color:var(--accent-green)">' + scScore + '/' + scMax + '</div><div class="stat-label">' + t('scenarioScore') + '</div></div>' +
+      '<div class="summary-stat"><div class="stat-value" style="color:var(--accent-cyan)">' + state.scenariosDone + '/4</div><div class="stat-label">' + t('scenariosDone') + '</div></div>' +
+      '<div class="summary-stat"><div class="stat-value" style="color:var(--accent-amber)">' + state.totalScore + '</div><div class="stat-label">' + t('totalScore') + '</div></div>' +
+    '</div>' +
+    '<div class="summary-lessons"><h3>' + t('keyTakeaways') + '</h3><ul>' +
+    sc.lessons.map(function(l) { return '<li>' + l + '</li>'; }).join('') +
+    '</ul></div>' +
+    (allDone ? '<button class="continue-btn show" onclick="showCompletion()" style="display:inline-block;margin-bottom:0.75rem;">' + t('viewCert') + '</button><br>' : '') +
+    '<button class="btn-back-menu" onclick="backToMenu()">' + t('backBtn') + '</button>' +
+    '</div>';
 
   showScreen('summaryScreen');
 }
 
 // ===== COMPLETION / CERTIFICATE =====
 function showCompletion() {
-  const pct = Math.round((state.totalScore / state.maxPossible) * 100);
-  const today = new Date();
-  const dateStr = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  var scenarios = getScenarios();
+  var pct = Math.round((state.totalScore / state.maxPossible) * 100);
+  var today = new Date();
+  var dateStr = today.toLocaleDateString(t('dateLocale'), { day: 'numeric', month: 'long', year: 'numeric' });
 
-  const scenarioLines = scenarios.map(s => {
-    const got = state.scenarioScores[s.id] || 0;
-    const max = s.steps.length * 100;
-    return `<div style="display:flex;justify-content:space-between;padding:0.15rem 0;"><span>${s.title}</span><span style="font-weight:700;">${got}/${max}</span></div>`;
+  var scenarioLines = scenarios.map(function(s) {
+    var got = state.scenarioScores[s.id] || 0;
+    var max = s.steps.length * 100;
+    return '<div style="display:flex;justify-content:space-between;padding:0.15rem 0;"><span>' + s.title + '</span><span style="font-weight:700;">' + got + '/' + max + '</span></div>';
   }).join('');
 
-  document.getElementById('completionScreen').innerHTML = `
-    <div class="summary-container">
-      <div class="summary-icon">&#127891;</div>
-      <div class="summary-title">Training Complete!</div>
-      <div class="summary-subtitle">Congratulations, ${state.playerName}! You've completed all security awareness scenarios.</div>
-
-      <div class="cert-preview">
-        <div class="cert-org">CyberQuest Security Training</div>
-        <div class="cert-title">Certificate of Completion</div>
-        <div class="cert-subtitle">Security Awareness Training Programme</div>
-        <div class="cert-name">${state.playerName}</div>
-        <div class="cert-detail">
-          has successfully completed all four interactive<br>security awareness training scenarios
-        </div>
-        <div class="cert-score-line">Overall Score: ${state.totalScore} / ${state.maxPossible} (${pct}%)</div>
-        <div style="position:relative;z-index:1;font-size:0.8rem;color:#555;">
-          ${scenarioLines}
-        </div>
-        <div class="cert-date">${dateStr}</div>
-      </div>
-
-      <button class="download-cert-btn" onclick="generatePDF()">&#128196; Download PDF Certificate</button>
-      <br><br>
-      <button class="btn-back-menu" onclick="backToMenu()">&#8592; Back to Scenarios</button>
-    </div>`;
+  document.getElementById('completionScreen').innerHTML =
+    '<div class="summary-container">' +
+    '<div class="summary-icon">&#127891;</div>' +
+    '<div class="summary-title">' + t('trainingComplete') + '</div>' +
+    '<div class="summary-subtitle">' + t('congratsMsg').replace('{name}', state.playerName) + '</div>' +
+    '<div class="cert-preview">' +
+      '<div class="cert-org">' + t('certOrg') + '</div>' +
+      '<div class="cert-title">' + t('certTitle') + '</div>' +
+      '<div class="cert-subtitle">' + t('certSubtitle') + '</div>' +
+      '<div class="cert-name">' + state.playerName + '</div>' +
+      '<div class="cert-detail">' + t('certDesc') + '</div>' +
+      '<div class="cert-score-line">' + t('certScoreLabel') + ': ' + state.totalScore + ' / ' + state.maxPossible + ' (' + pct + '%)</div>' +
+      '<div style="position:relative;z-index:1;font-size:0.8rem;color:#555;">' + scenarioLines + '</div>' +
+      '<div class="cert-date">' + t('certAwardedOn') + ' ' + dateStr + '</div>' +
+    '</div>' +
+    '<button class="download-cert-btn" onclick="generatePDF()">' + t('downloadCert') + '</button>' +
+    '<br><br><button class="btn-back-menu" onclick="backToMenu()">' + t('backBtn') + '</button>' +
+    '</div>';
 
   showScreen('completionScreen');
 }
 
 // ===== PDF GENERATION =====
 function generatePDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-  const w = 297, h = 210;
-  const today = new Date();
-  const dateStr = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-  const pct = Math.round((state.totalScore / state.maxPossible) * 100);
+  var jsPDFLib = window.jspdf;
+  var doc = new jsPDFLib.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  var w = 297, h = 210;
+  var today = new Date();
+  var dateStr = today.toLocaleDateString(t('dateLocale'), { day: 'numeric', month: 'long', year: 'numeric' });
+  var pct = Math.round((state.totalScore / state.maxPossible) * 100);
 
-  // Background
   doc.setFillColor(255, 251, 235);
   doc.rect(0, 0, w, h, 'F');
-
-  // Outer border
   doc.setDrawColor(180, 140, 60);
   doc.setLineWidth(2);
   doc.rect(8, 8, w - 16, h - 16);
-
-  // Inner border
   doc.setLineWidth(0.5);
   doc.rect(12, 12, w - 24, h - 24);
-
-  // Dashed inner border
   doc.setLineDashPattern([3, 2], 0);
   doc.setDrawColor(200, 170, 90);
   doc.setLineWidth(0.3);
   doc.rect(15, 15, w - 30, h - 30);
   doc.setLineDashPattern([], 0);
 
-  // Corner flourishes
-  const corners = [[20, 20], [w - 20, 20], [20, h - 20], [w - 20, h - 20]];
+  var corners = [[20,20],[w-20,20],[20,h-20],[w-20,h-20]];
   doc.setDrawColor(180, 140, 60);
   doc.setLineWidth(0.8);
-  corners.forEach(([cx, cy]) => {
-    doc.circle(cx, cy, 3);
-    doc.circle(cx, cy, 1.5);
-  });
+  corners.forEach(function(c) { doc.circle(c[0], c[1], 3); doc.circle(c[0], c[1], 1.5); });
 
-  // Shield icon (simple)
   doc.setFillColor(180, 140, 60);
-  const sx = w / 2, sy = 32;
-  doc.triangle(sx - 8, sy - 4, sx + 8, sy - 4, sx, sy + 10, 'F');
-  doc.rect(sx - 8, sy - 10, 16, 6, 'F');
+  var sx = w/2, sy = 32;
+  doc.triangle(sx-8, sy-4, sx+8, sy-4, sx, sy+10, 'F');
+  doc.rect(sx-8, sy-10, 16, 6, 'F');
   doc.setFillColor(255, 251, 235);
-  doc.circle(sx, sy - 2, 2.5, 'F');
+  doc.circle(sx, sy-2, 2.5, 'F');
 
-  // Organisation
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   doc.setTextColor(139, 115, 64);
-  doc.text('CYBERQUEST SECURITY TRAINING', w / 2, 50, { align: 'center' });
+  doc.text(t('certOrg'), w/2, 50, { align: 'center' });
 
-  // Title
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(28);
   doc.setTextColor(44, 44, 84);
-  doc.text('Certificate of Completion', w / 2, 64, { align: 'center' });
+  doc.text(t('certTitle'), w/2, 64, { align: 'center' });
 
-  // Subtitle
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(12);
   doc.setTextColor(100, 100, 100);
-  doc.text('Security Awareness Training Programme', w / 2, 73, { align: 'center' });
+  doc.text(t('certSubtitle'), w/2, 73, { align: 'center' });
 
-  // Decorative line
   doc.setDrawColor(180, 140, 60);
   doc.setLineWidth(0.5);
-  doc.line(w / 2 - 50, 78, w / 2 + 50, 78);
+  doc.line(w/2-50, 78, w/2+50, 78);
 
-  // "This certifies that"
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(11);
   doc.setTextColor(120, 120, 120);
-  doc.text('This certifies that', w / 2, 88, { align: 'center' });
+  doc.text(t('thisCertifies'), w/2, 88, { align: 'center' });
 
-  // Name
   doc.setFont('helvetica', 'bolditalic');
   doc.setFontSize(26);
   doc.setTextColor(30, 30, 60);
-  doc.text(state.playerName, w / 2, 102, { align: 'center' });
+  doc.text(state.playerName, w/2, 102, { align: 'center' });
 
-  // Name underline
-  const nameWidth = doc.getTextWidth(state.playerName);
+  var nameWidth = doc.getTextWidth(state.playerName);
   doc.setDrawColor(180, 140, 60);
   doc.setLineWidth(0.3);
-  doc.line(w / 2 - nameWidth / 2 - 5, 105, w / 2 + nameWidth / 2 + 5, 105);
+  doc.line(w/2 - nameWidth/2 - 5, 105, w/2 + nameWidth/2 + 5, 105);
 
-  // Description
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
   doc.setTextColor(80, 80, 80);
-  doc.text('has successfully completed all four interactive security awareness training scenarios', w / 2, 115, { align: 'center' });
+  doc.text(t('certDesc'), w/2, 115, { align: 'center' });
 
-  // Scenarios covered
   doc.setFontSize(9);
   doc.setTextColor(100, 100, 100);
-  const scenarioNames = scenarios.map(s => s.badge).join('   |   ');
-  doc.text(scenarioNames, w / 2, 123, { align: 'center' });
+  var scenarios = getScenarios();
+  var badgeNames = scenarios.map(function(s) { return s.badge; }).join('   |   ');
+  doc.text(badgeNames, w/2, 123, { align: 'center' });
 
-  // Score
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
   doc.setTextColor(44, 110, 73);
-  doc.text(`Overall Score: ${state.totalScore} / ${state.maxPossible} (${pct}%)`, w / 2, 135, { align: 'center' });
+  doc.text(t('certScoreLabel') + ': ' + state.totalScore + ' / ' + state.maxPossible + ' (' + pct + '%)', w/2, 135, { align: 'center' });
 
-  // Per-scenario breakdown
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(100, 100, 100);
-  let bx = w / 2 - 80;
-  scenarios.forEach((s, i) => {
-    const got = state.scenarioScores[s.id] || 0;
-    const max = s.steps.length * 100;
-    const lineY = 143 + i * 6;
+  var bx = w/2 - 80;
+  scenarios.forEach(function(s, i) {
+    var got = state.scenarioScores[s.id] || 0;
+    var max = s.steps.length * 100;
+    var lineY = 143 + i * 6;
     doc.text(s.title, bx, lineY);
-    doc.text(`${got} / ${max}`, bx + 160, lineY, { align: 'right' });
+    doc.text(got + ' / ' + max, bx + 160, lineY, { align: 'right' });
   });
 
-  // Decorative line
   doc.setDrawColor(180, 140, 60);
   doc.setLineWidth(0.5);
-  doc.line(w / 2 - 50, 170, w / 2 + 50, 170);
+  doc.line(w/2-50, 170, w/2+50, 170);
 
-  // Date
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   doc.setTextColor(139, 115, 64);
-  doc.text(`Awarded on ${dateStr}`, w / 2, 178, { align: 'center' });
+  doc.text(t('certAwardedOn') + ' ' + dateStr, w/2, 178, { align: 'center' });
 
-  // Cert ID
   doc.setFontSize(7);
   doc.setTextColor(170, 170, 170);
-  const certId = 'CQ-' + today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0') + '-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-  doc.text(`Certificate ID: ${certId}`, w / 2, 195, { align: 'center' });
+  var certId = 'CQ-' + today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + String(today.getDate()).padStart(2,'0') + '-' + Math.random().toString(36).substring(2,8).toUpperCase();
+  doc.text('Certificate ID: ' + certId, w/2, 195, { align: 'center' });
 
-  doc.save(`CyberQuest_Certificate_${state.playerName.replace(/\s+/g, '_')}.pdf`);
+  doc.save('CyberQuest_Certificate_' + state.playerName.replace(/\s+/g,'_') + '.pdf');
 }
 
 // ===== NAVIGATION =====
 function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
   document.getElementById(id).classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -1831,6 +1786,9 @@ function updateScoreBar() {
   document.getElementById('totalScore').textContent = state.totalScore;
   document.getElementById('scenariosDone').textContent = state.scenariosDone;
   document.getElementById('streak').textContent = state.streak;
+  document.getElementById('lblScore').textContent = t('scoreLabel');
+  document.getElementById('lblScenarios').textContent = t('scenariosLabel');
+  document.getElementById('lblStreak').textContent = t('streakLabel');
 }
 
 // ===== INIT =====
